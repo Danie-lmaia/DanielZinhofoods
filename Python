@@ -1,0 +1,245 @@
+import os
+import time
+
+class Restaurante:
+    def __init__(self, nome, cardapio, taxa_entrega):
+        self.nome = nome
+        self.cardapio = cardapio
+        self.taxa_entrega = taxa_entrega
+
+class Pedido:
+    def __init__(self):
+        self.itens = []
+        self.total_itens = 0.0
+        # Alterado para um dicionário para guardar as taxas de vários restaurantes
+        self.taxas_entrega = {}
+        self.cupom_aplicado = 0.0
+
+    def adicionar_item(self, nome, preco, quantidade, restaurante_nome, taxa_restaurante):
+        self.itens.append({"nome": nome, "preco": preco, "qtd": quantidade, "restaurante": restaurante_nome})
+        self.total_itens += preco * quantidade
+        # Registra a taxa deste restaurante específico no dicionário
+        self.taxas_entrega[restaurante_nome] = taxa_restaurante
+
+    @property
+    def taxa_entrega_total(self):
+        # Soma todas as taxas exclusivas guardadas no dicionário
+        return sum(self.taxas_entrega.values())
+
+    def calcular_total(self):
+        return (self.total_itens + self.taxa_entrega_total) - self.cupom_aplicado
+
+    def mostrar_pedido(self):
+        print("\n" + "═"*40)
+        print(f"{'🛒 SEU CARRINHO':^40}")
+        print("═"*40)
+        if not self.itens:
+            print(f"{'Vazio':^40}")
+        else:
+            for item in self.itens:
+                subtotal = item['preco'] * item['qtd']
+                print(f" {item['qtd']}x {item['nome']:.<22} R$ {subtotal:>8.2f}")
+
+            print("─" * 40)
+            print(f" Subtotal:            R$ {self.total_itens:>8.2f}")
+            # Mostra a soma de todas as taxas de entrega
+            print(f" Taxa de Entrega:     R$ {self.taxa_entrega_total:>8.2f}")
+
+            if self.cupom_aplicado > 0:
+                print(f" Desconto Cupom:    - R$ {self.cupom_aplicado:>8.2f}")
+            print(f" TOTAL FINAL:         R$ {self.calcular_total():>8.2f}")
+        print("═"*40)
+
+    def salvar_historico(self, metodo_pagamento, endereco):
+        with open("historico_pedidos.txt", "a", encoding="utf-8") as arquivo:
+            arquivo.write(f"Pedido Finalizado - Total: R$ {self.calcular_total():.2f} - Pagamento: {metodo_pagamento} - Endereço: {endereco}\n")
+
+def limpar_tela():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+# --- CONFIGURAÇÃO ---
+restaurantes = [
+    Restaurante("Pizza Planet", {1: ("Calabresa", 35.0), 2: ("Frango", 38.0)}, 7.0),
+    Restaurante("Burger House", {1: ("Hamburguer", 20.0), 2: ("Batata Frita", 12.0)}, 5.0),
+    Restaurante("Sushi Express", {1: ("Combo Sushi", 45.0), 2: ("Temaki", 22.0)}, 10.0),
+]
+
+pedido_atual = Pedido()
+CUPOM_VALIDO = "QUERO10"
+VALOR_CUPOM = 10.0
+
+# --- SISTEMA DE LOGIN ---
+usuarios_cadastrados = {"admin": "1234"}
+
+def sistema_login():
+    while True:
+        limpar_tela()
+        print("      🔐 DanielzinhoFoods - ACESSO 🔐")
+        print("----------------------------------------")
+        print("[1] - Fazer Login")
+        print("[2] - Criar Nova Conta")
+        print("[0] - Sair do Aplicativo")
+        print("----------------------------------------")
+
+        opcao = input("Escolha uma opção: ")
+
+        if opcao == '0':
+            print("\nSaindo do sistema... Até logo! 👋")
+            exit()
+
+        elif opcao == '1':
+            print("\n--- LOGIN ---")
+            usuario = input("Usuário: ")
+            senha = input("Senha: ")
+
+            if usuario in usuarios_cadastrados and usuarios_cadastrados[usuario] == senha:
+                print(f"\n✅ Bem-vindo(a) de volta, {usuario}!")
+                time.sleep(1.5)
+                return usuario
+            else:
+                print("\n❌ Usuário ou senha incorretos.")
+                time.sleep(1.5)
+
+        elif opcao == '2':
+            print("\n--- CRIAR CONTA ---")
+            novo_usuario = input("Escolha um nome de usuário: ")
+
+            if novo_usuario in usuarios_cadastrados:
+                print("\n❌ Este usuário já existe. Tente outro.")
+            else:
+                nova_senha = input("Crie uma senha: ")
+                usuarios_cadastrados[novo_usuario] = nova_senha
+                print("\n✅ Conta criada com sucesso! Você já pode fazer login.")
+            time.sleep(1.5)
+
+        else:
+            print("\n❌ Opção inválida.")
+            time.sleep(1)
+
+# Executa o login
+usuario_logado = sistema_login()
+
+# --- LOOP PRINCIPAL ---
+while True:
+    limpar_tela()
+    print("      🍕 DanielzinhoFoods - DELIVERY 🛵")
+    print(f"      👤 Usuário: {usuario_logado}")
+    print("----------------------------------------")
+    for i, rest in enumerate(restaurantes, start=1):
+        print(f"[{i}] - {rest.nome} (Entrega: R$ {rest.taxa_entrega:.2f})")
+    print("[V] - Visualizar Carrinho")
+    print("[C] - Aplicar Cupom de Desconto")
+    print("[0] - Finalizar Pedido ou Sair")
+    print("----------------------------------------")
+
+    escolha = input("Escolha uma opção: ").upper()
+
+    if escolha == 'V':
+        limpar_tela()
+        pedido_atual.mostrar_pedido()
+        input("\nPressione ENTER para voltar ao menu...")
+        continue
+
+    if escolha == '0':
+        if pedido_atual.total_itens > 0:
+            pgto_opcoes = {"1": "Cartão", "2": "Dinheiro", "3": "Pix"}
+
+            while True:
+                limpar_tela()
+                pedido_atual.mostrar_pedido()
+                print("\n[1] Cartão | [2] Dinheiro | [3] Pix | [0] Voltar ao Menu")
+                op = input("Forma de Pagamento (ou 0 para voltar): ")
+
+                if op == '0':
+                    print("\n🔙 Voltando ao menu de restaurantes...")
+                    time.sleep(1)
+                    break
+
+                elif op in pgto_opcoes:
+                    metodo = pgto_opcoes[op]
+
+                    print("\n" + "─"*40)
+                    print(f"{'📍 ENDEREÇO DE ENTREGA':^40}")
+                    print("─"*40)
+                    while True:
+                        endereco = input("Digite a rua, número e bairro: ").strip()
+                        if endereco:
+                            break
+                        else:
+                            print("❌ O endereço não pode ficar vazio. Tente novamente.")
+
+                    print("\n⏳ Processando seu pedido...")
+                    time.sleep(2)
+                    print("✅ Pedido confirmado! Os restaurantes estão preparando.")
+                    time.sleep(2)
+                    print(f"🛵 Os entregadores saíram com seus pedidos rumo a:\n👉 {endereco}")
+
+                    pedido_atual.salvar_historico(metodo, endereco)
+                    print("\nObrigado por usar o DanielzinhoFoods! 👋\n")
+                    exit()
+                else:
+                    print("❌ Opção de pagamento inválida. Tente novamente.")
+                    time.sleep(1.5)
+
+            continue
+        else:
+            limpar_tela()
+            print("\nCarrinho vazio. Saindo do sistema...")
+            print("Obrigado por usar o DanielzinhoFoods! 👋\n")
+            break
+
+    if escolha == 'C':
+        cupom = input("Digite o código do cupom: ").upper()
+        if cupom == CUPOM_VALIDO:
+            pedido_atual.cupom_aplicado = VALOR_CUPOM
+            print(f"✅ Cupom de R$ {VALOR_CUPOM} aplicado com sucesso!")
+        else:
+            print("❌ Cupom inválido.")
+        time.sleep(1.5)
+        continue
+
+    try:
+        idx = int(escolha) - 1
+        if 0 <= idx < len(restaurantes):
+            rest_selecionado = restaurantes[idx]
+
+            # A TRAVA DE SEGURANÇA FOI REMOVIDA DAQUI!
+            # Agora você pode acessar qualquer cardápio livremente.
+
+            while True:
+                limpar_tela()
+                print(f"📋 CARDÁPIO: {rest_selecionado.nome}")
+                pedido_atual.mostrar_pedido()
+                print("\n[Cod] Escolher Item | [0] Voltar")
+
+                for cod, (nome, preco) in rest_selecionado.cardapio.items():
+                    print(f" [{cod}] {nome:.<22} R$ {preco:>7.2f}")
+
+                try:
+                    item_cod = int(input("\nCódigo do item: "))
+                    if item_cod == 0: break
+
+                    if item_cod in rest_selecionado.cardapio:
+                        qtd = int(input(f"Quantidade de '{rest_selecionado.cardapio[item_cod][0]}': "))
+                        if qtd > 0:
+                            nome_it, preco_it = rest_selecionado.cardapio[item_cod]
+
+                            # Atualizado para passar também o nome e a taxa do restaurante atual
+                            pedido_atual.adicionar_item(nome_it, preco_it, qtd, rest_selecionado.nome, rest_selecionado.taxa_entrega)
+                            print(f"✅ {qtd}x {nome_it} adicionado!")
+                            time.sleep(0.5)
+                        else:
+                            print("❌ Quantidade inválida.")
+                            time.sleep(1)
+                    else:
+                        print("❌ Item não encontrado.")
+                        time.sleep(1)
+                except ValueError:
+                    print("❌ Digite um número válido.")
+                    time.sleep(1)
+        else:
+            print("❌ Restaurante inválido.")
+            time.sleep(1)
+    except ValueError:
+        print("❌ Opção inválida.")
+        time.sleep(1)
