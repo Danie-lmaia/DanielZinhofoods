@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Mini iFood</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+    <div class="box">
+        <h1>🍔 Mini iFood</h1>
+
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="senha" placeholder="Senha">
+
+        <button onclick="login()">Entrar</button>
+
+        <p class="link" onclick="mostrarCadastro()">Criar conta</p>
+    </div>
+
+    <div class="box hidden" id="cadastroBox">
+
+        <h1>Cadastro</h1>
+
+        <input type="email" id="novoEmail" placeholder="Email">
+        <input type="password" id="novaSenha" placeholder="Senha">
+
+        <button onclick="cadastrar()">Cadastrar</button>
+
+        <p class="link" onclick="voltarLogin()">Voltar</p>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

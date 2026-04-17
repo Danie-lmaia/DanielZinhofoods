@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h2>🍽 Restaurantes</h2>
+
+    <div class="header-buttons">
+        <button onclick="window.location.href='history.html'">📦 Pedidos</button>
+        <button onclick="logout()">Sair</button>
+    </div>
+</header>
+
+<div class="lista" id="lista"></div>
+
+<script src="script.js"></script>
+<script>
+verificarLogin()
+carregarRestaurantes()
+</script>
+
+</body>
+</html>

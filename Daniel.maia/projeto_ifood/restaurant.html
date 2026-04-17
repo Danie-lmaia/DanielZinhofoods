@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Restaurante</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h2 id="nomeRestaurante">🍽 Restaurante</h2>
+
+    <button class="btn-voltar" onclick="voltar()">Voltar</button>
+</header>
+
+<div class="lista" id="menu"></div>
+
+<div class="carrinho">
+    <h3>🛒 Carrinho</h3>
+
+    <ul id="listaCarrinho"></ul>
+
+    <p id="total">Total: R$ 0.00</p>
+
+    <button onclick="finalizarPedido()">Finalizar pedido</button>
+</div>
+
+<script src="script.js"></script>
+<script>
+carregarMenu()
+</script>
+
+</body>
+</html>
