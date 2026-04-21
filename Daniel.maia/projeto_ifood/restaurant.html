@@ -2,14 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Restaurante</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Mini iFood - Menu</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
     <h2 id="nomeRestaurante">🍽 Restaurante</h2>
-
     <button class="btn-voltar" onclick="voltar()">Voltar</button>
 </header>
 
@@ -17,17 +16,20 @@
 
 <div class="carrinho">
     <h3>🛒 Carrinho</h3>
-
-    <ul id="listaCarrinho"></ul>
-
+    <ul id="listaCarrinho" style="list-style-type: none; padding: 0;"></ul>
     <p id="total">Total: R$ 0.00</p>
-
     <button onclick="finalizarPedido()">Finalizar pedido</button>
 </div>
 
-<script src="script.js"></script>
+<div class="cupom-area">
+    <input type="text" id="inputCupom" placeholder="Tem um cupom?">
+    <button onclick="aplicarCupom()">Aplicar</button>
+</div>
+
+<script src="js/script.js"></script>
 <script>
-carregarMenu()
+    verificarLogin();
+    carregarMenu();
 </script>
 
 </body>
