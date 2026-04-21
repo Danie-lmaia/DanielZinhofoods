@@ -2,21 +2,22 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Histórico</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Mini iFood - Histórico</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
     <h2>📦 Meus Pedidos</h2>
-    <button onclick="voltarHome()">Voltar</button>
+    <button class="btn-voltar" onclick="voltarHome()">Voltar</button>
 </header>
 
 <div class="lista" id="historico"></div>
 
-<script src="script.js"></script>
+<script src="js/script.js"></script>
 <script>
-carregarHistorico()
+    verificarLogin();
+    carregarHistorico();
 </script>
 
 </body>
