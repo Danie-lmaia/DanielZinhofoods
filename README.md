@@ -1,6 +1,6 @@
 # 🍔 DanielzinhoFoods
 
-DanielzinhoFoods é uma plataforma de delivery completa que conecta clientes a restaurantes locais. O projeto conta com uma interface intuitiva para usuários realizarem pedidos e um painel administrativo robusto para gestão de estabelecimentos, cardápios e promoções.
+DanielzinhoFoods é uma plataforma de delivery completa que conecta clientes a restaurantes locais de forma ágil e eficiente. O projeto oferece uma interface intuitiva, permitindo que os usuários realizem pedidos com facilidade, acompanhem suas entregas e descubram novas opções gastronômicas.
 
 ## 🚀 Funcionalidades
 
