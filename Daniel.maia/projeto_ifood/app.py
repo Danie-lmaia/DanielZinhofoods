@@ -21,6 +21,7 @@ menus = {
 cupons = {
     "DANIEL10": 10.00,
     "FOODS5": 5.00
+    "Fastdelivery": 10.00
 }
 
 # --- ROTAS PÚBLICAS ---
