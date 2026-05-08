@@ -15,6 +15,13 @@ menus = {
         {"nome": "Super X-Tudo", "preco": 25.90},
         {"nome": "Batata Frita", "preco": 12.00}
     ]
+    "Danielzinho Pizzas" [
+        {"nome": "Pizza Calabresa", "preco": 45.90},
+        {"nome": "Pizza Portuguesa", "preco": 49.90},
+        {"nome": "Pizza Frango com Catupiry", "preco": 52.00},
+        {"nome": "Pizza Marguerita", "preco": 44.50},
+        {"nome": "Coca-Cola 2L", "preco": 14.00}
+    ]
 }
 
 # Dicionário de cupons: "NOME": valor_desconto
