@@ -2,26 +2,33 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>DanielzinhoFoods - Login</title>
+    <title>DanielzinhoFood - Login</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <div class="container">
     <div class="box">
-        <h1>🍔 DanielzinhoFoods</h1>
-        <input type="email" id="email" placeholder="Email">
-        <input type="password" id="senha" placeholder="Senha">
-        <button onclick="login()">Entrar</button>
-        <p class="link" onclick="mostrarCadastro()">Criar conta</p>
+        <h2 style="color: var(--ifood-red); font-weight: 800; margin-bottom: 5px;">Danielzinho<span>Food</span></h2>
+        <p style="color: var(--text-light); font-size: 14px; margin-bottom: 25px;">Falta pouco para matar sua fome!</p>
+        
+        <input type="text" id="email" placeholder="E-mail de acesso">
+        <input type="password" id="senha" placeholder="Sua senha">
+        
+        <button onclick="login()" style="width: 100%; margin-top: 10px;">Entrar</button>
+        <p class="link" onclick="mostrarCadastro()">Não tem conta? Cadastre-se</p>
     </div>
 
-    <div class="box hidden" id="cadastroBox">
-        <h1>Cadastro</h1>
-        <input type="email" id="novoEmail" placeholder="Email">
-        <input type="password" id="novaSenha" placeholder="Senha">
-        <button onclick="cadastrar()">Cadastrar</button>
-        <p class="link" onclick="voltarLogin()">Voltar</p>
+    <div id="cadastroBox" class="box hidden">
+        <h2 style="color: var(--ifood-red); font-weight: 800; margin-bottom: 5px;">Criar Conta</h2>
+        <p style="color: var(--text-light); font-size: 14px; margin-bottom: 25px;">Seja muito bem-vindo!</p>
+        
+        <input type="text" id="novoNome" placeholder="Nome Completo">
+        <input type="text" id="novoEmail" placeholder="Seu melhor e-mail">
+        <input type="password" id="novaSenha" placeholder="Crie uma senha forte">
+        
+        <button onclick="cadastrar()" style="width: 100%; margin-top: 10px; background-color: #2fbe48;">Concluir Cadastro</button>
+        <p class="link" onclick="voltarLogin()" style="color: var(--text-light);">Já tenho conta, quero entrar</p>
     </div>
 </div>
 
