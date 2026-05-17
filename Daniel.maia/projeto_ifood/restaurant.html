@@ -2,35 +2,36 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini iFood - Menu</title>
+    <title>DanielzinhoFoods - Cardápio</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<header>
-    <h2 id="nomeRestaurante">🍽Restaurantes🍽</h2>
-    <button class="btn-voltar" onclick="voltar()">Voltar</button>
-</header>
-
-<div class="lista" id="menu"></div>
-
-<div class="carrinho">
-    <h3>🛒 Carrinho</h3>
-    <ul id="listaCarrinho" style="list-style-type: none; padding: 0;"></ul>
-    <p id="total">Total: R$ 0.00</p>
-    <button onclick="finalizarPedido()">Finalizar pedido</button>
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo" onclick="voltarHome()">Danielzinho<span>Foods</span></h1>
+        <ul class="nav-links">
+            <li><a onclick="voltarHome()">Início</a></li>
+            <li><a onclick="window.location.href='history.html'">Meus Pedidos</a></li>
+            <li>
+                <a onclick="window.location.href='checkout.html'" class="nav-carrinho-link">
+                    🛒 Sacola <span id="badgeCarrinho" class="badge">0</span>
+                </a>
+            </li>
+            <li><a onclick="logout()" class="btn-sair">Sair</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="layout-menu" style="display:flex; flex-direction:column;">
+    <h2 id="nomeRestaurante">Carregando loja...</h2>
+    <div id="menu"></div>
+    <button onclick="window.location.href='checkout.html'" class="btn-finalizar" style="width: auto; align-self: flex-end; padding: 15px 30px;">
+        Avançar para o Pagamento →
+    </button>
 </div>
-
-<div class="cupom-area">
-    <input type="text" id="inputCupom" placeholder="Tem um cupom?">
-    <button onclick="aplicarCupom()">Aplicar</button>
-</div>
-
 <script src="js/script.js"></script>
 <script>
     verificarLogin();
     carregarMenu();
 </script>
-
 </body>
 </html>
