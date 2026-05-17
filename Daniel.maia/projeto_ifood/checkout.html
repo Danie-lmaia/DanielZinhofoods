@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DanielzinhoFoods - Checkout</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo" onclick="voltarHome()">Danielzinho<span>Foods</span></h1>
+        <ul class="nav-links">
+            <li><a onclick="voltarHome()">Início</a></li>
+            <li><a onclick="window.location.href='history.html'">Meus Pedidos</a></li>
+            <li>
+                <a onclick="window.location.href='checkout.html'" class="nav-carrinho-link">
+                    🛒 Sacola <span id="badgeCarrinho" class="badge">0</span>
+                </a>
+            </li>
+            <li><a onclick="window.location.href='profile.html'">👤 Perfil</a></li>
+            <li><a onclick="logout()" class="btn-sair">Sair</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="layout-checkout">
+    <h2>💳 Finalizar seu Pedido</h2>
+    
+    <div class="carrinho">
+        <h3>Sua Sacola</h3>
+        <ul id="listaCarrinho" style="list-style-type: none; padding: 0; margin: 0;"></ul>
+        
+        <div class="cupom-area">
+            <input type="text" id="inputCupom" placeholder="Cupom de Desconto">
+            <button onclick="aplicarCupom()">Aplicar</button>
+        </div>
+        
+        <div id="total">Total: R$ 0.00</div>
+    </div>
+
+    <div class="pagamento-area">
+        <h3>Forma de Pagamento</h3>
+        <div class="metodos-pagamento">
+            <label class="metodo-opcao">
+                <input type="radio" name="metodo" value="Pix" checked>
+                <span>📱 Pix (Aprovação imediata)</span>
+            </label>
+            <label class="metodo-opcao">
+                <input type="radio" name="metodo" value="Cartão de Crédito">
+                <span>💳 Cartão de Crédito</span>
+            </label>
+            <label class="metodo-opcao">
+                <input type="radio" name="metodo" value="Saldo da Conta">
+                <span>💵 Pagar usando Saldo da Carteira</span>
+            </label>
+        </div>
+        <button onclick="finalizarPedido()" class="btn-finalizar">Fazer o Pagamento</button>
+    </div>
+</div>
+
+<script src="js/script.js"></script>
+<script>
+    verificarLogin();
+    atualizarCarrinho();
+</script>
+</body>
+</html>
