@@ -33,4 +33,4 @@ Certifique-se de ter o **Python 3** instalado na sua máquina.
 ### 2. Instalação de Dependências
 Abra o terminal na pasta do projeto e instale o Flask e o Flask-CORS:
 ```bash
-pip install flask flask-cors
+pip install flask flask-cors flask-sqlalchemy
