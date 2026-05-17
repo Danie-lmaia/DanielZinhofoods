@@ -2,26 +2,37 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini iFood - Restaurantes</title>
+    <title>DanielzinhoFoods - Restaurantes</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<header>
-    <h2>🍽 Restaurantes🍽</h2>
-    <div class="header-buttons">
-        <button onclick="window.location.href='history.html'">📦Pedidos📦</button>
-        <button onclick="logout()">Sair</button>
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo" onclick="voltarHome()">Danielzinho<span>Foods</span></h1>
+        <div class="search-container">
+            <input type="text" id="inputBusca" placeholder="Busque por item, culinária ou loja..." oninput="filtrarRestaurantes()">
+        </div>
+        <ul class="nav-links">
+            <li><a onclick="voltarHome()">Início</a></li>
+            <li><a onclick="window.location.href='history.html'">Meus Pedidos</a></li>
+            <li>
+                <a onclick="window.location.href='checkout.html'" class="nav-carrinho-link">
+                    🛒 Sacola <span id="badgeCarrinho" class="badge">0</span>
+                </a>
+            </li>
+            <li><a onclick="window.location.href='profile.html'">👤 Perfil</a></li>
+            <li><a onclick="logout()" class="btn-sair">Sair</a></li>
+        </ul>
     </div>
-</header>
-
-<div class="lista" id="lista"></div>
-
+</nav>
+<div class="lista">
+    <h2>Lojas disponíveis</h2>
+    <div id="lista"></div>
+</div>
 <script src="js/script.js"></script>
 <script>
     verificarLogin();
     carregarRestaurantes();
 </script>
-
 </body>
 </html>
