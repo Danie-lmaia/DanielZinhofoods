@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>DanielzinhoFood - Meu Perfil</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo" onclick="voltarHome()">Danielzinho<span>Food</span></h1>
+        <ul class="nav-links">
+            <li><a onclick="voltarHome()">Início</a></li>
+            <li><a onclick="window.location.href='history.html'">Meus Pedidos</a></li>
+            <li>
+                <a onclick="window.location.href='checkout.html'" class="nav-carrinho-link">
+                    🛒 Sacola <span id="badgeCarrinho" class="badge">0</span>
+                </a>
+            </li>
+            <li><a onclick="window.location.href='profile.html'" style="font-weight: bold; color: var(--ifood-red);">👤 Perfil</a></li>
+            <li><a onclick="logout()" class="btn-sair">Sair</a></li>
+        </ul>
+    </div>
+</nav>
+
+<div class="layout-profile">
+    <h2>👤 Meu Perfil</h2>
+    
+    <div class="profile-card">
+        <div class="profile-header-info">
+            <img id="viewFoto" src="img/DFoods.jpg" class="img-perfil-grande" alt="Foto do Usuário">
+            <div>
+                <h3 id="viewNome">Carregando...</h3>
+                <p id="viewEmail" style="color: var(--text-light); margin: 4px 0;"></p>
+                <span class="badge-carteira">💰 Carteira: <strong id="viewSaldo">R$ 0.00</strong></span>
+            </div>
+        </div>
+        
+        <div class="profile-details-grid">
+            <div><strong>📞 Telefone:</strong> <span id="viewTelefone">Não informado</span></div>
+            <div><strong>📍 Endereço de Entrega:</strong> <span id="viewEndereco">Não informado</span></div>
+        </div>
+    </div>
+
+    <div class="profile-form-box">
+        <h3>Editar Informações</h3>
+        <div class="form-group-row">
+            <div class="form-field">
+                <label>Nome Completo</label>
+                <input type="text" id="inputNome" placeholder="Seu nome">
+            </div>
+            <div class="form-field">
+                <label>URL da Foto de Perfil</label>
+                <input type="text" id="inputFoto" placeholder="Link de uma imagem">
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="inputTelefone" placeholder="(00) 00000-0000">
+        </div>
+        <div class="form-field">
+            <label>Endereço Completo de Entrega</label>
+            <input type="text" id="inputEndereco" placeholder="Rua, Número, Bairro, Cidade">
+        </div>
+        
+        <button onclick="salvarPerfil()" class="btn-finalizar" style="margin-top: 15px;">Salvar Alterações</button>
+    </div>
+</div>
+
+<script src="js/script.js"></script>
+<script>
+    verificarLogin();
+    // Executa a carga síncrona com gatilhos de segurança contra exclusão
+    carregarPerfilCompleto();
+</script>
+</body>
+</html>
