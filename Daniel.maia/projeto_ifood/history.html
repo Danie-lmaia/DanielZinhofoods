@@ -2,23 +2,33 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Mini iFood - Histórico</title>
+    <title>DanielzinhoFoods - Histórico</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
-<header>
-    <h2>📦 Meus Pedidos</h2>
-    <button class="btn-voltar" onclick="voltarHome()">Voltar</button>
-</header>
-
-<div class="lista" id="historico"></div>
-
+<nav class="navbar">
+    <div class="nav-container">
+        <h1 class="logo" onclick="voltarHome()">Danielzinho<span>Foods</span></h1>
+        <ul class="nav-links">
+            <li><a onclick="voltarHome()">Início</a></li>
+            <li><a onclick="window.location.href='history.html'">Meus Pedidos</a></li>
+            <li>
+                <a onclick="window.location.href='checkout.html'" class="nav-carrinho-link">
+                    🛒 Sacola <span id="badgeCarrinho" class="badge">0</span>
+                </a>
+            </li>
+            <li><a onclick="logout()" class="btn-sair">Sair</a></li>
+        </ul>
+    </div>
+</nav>
+<div class="lista">
+    <h2>Histórico de Pedidos</h2>
+    <div id="historico"></div>
+</div>
 <script src="js/script.js"></script>
 <script>
     verificarLogin();
     carregarHistorico();
 </script>
-
 </body>
 </html>
