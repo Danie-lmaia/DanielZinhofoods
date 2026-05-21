@@ -2,78 +2,264 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - DanielzinhoFoods</title>
+    <title>Painel Admin - DanielzinhoFood</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #121212; color: white; }
-        .box { background: #1e1e1e; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #333; }
-        input, select { padding: 8px; margin: 5px 0; display: block; width: 250px; background: #2a2a2a; color: white; border: 1px solid #444; border-radius: 4px; }
-        button { padding: 10px 16px; background: #e74c3c; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        button:hover { background: #c0392b; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: #1a1a1a; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-        th { background: #222; font-size: 14px; text-transform: uppercase; color: #aaa; }
-        tr:hover { background: #242424; }
+        /* =========================================================
+           1. BASE E VARIÁVEIS GERAIS
+           ========================================================= */
+        :root {
+            --bg-body: #0f1115;
+            --bg-card: #181a20;
+            --bg-subcard: #22252e;
+            --bg-input: #2a2d35;
+            --border-color: #333842;
+            --primary: #ea1d2c;
+            --primary-hover: #c21825;
+            --success: #27ae60;
+            --success-hover: #219653;
+            --danger: #e74c3c;
+            --danger-hover: #c0392b;
+            --text-main: #ffffff;
+            --text-muted: #9aa0ac;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 0; padding-bottom: 60px; }
         
-        .botoes-rodape { display: flex; gap: 15px; margin-top: 25px; }
+        /* =========================================================
+           2. NAVBAR PROFISSIONAL
+           ========================================================= */
+        .navbar-admin {
+            background: var(--bg-card);
+            padding: 16px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .logo-admin { font-weight: 900; color: var(--text-main); font-size: 24px; letter-spacing: -0.5px; }
+        .logo-admin span { color: var(--primary); }
+        
+        .nav-links { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; align-items: center; }
+        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: 0.2s; text-transform: uppercase; letter-spacing: 0.5px;}
+        .nav-links a:hover { color: var(--text-main); }
+        
+        .btn-nav { background: var(--primary); color: white !important; padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; }
+        .btn-nav:hover { background: var(--primary-hover); }
+
+        /* =========================================================
+           3. ESTRUTURA DE GRID (CAIXAS MAIORES E AJUSTADAS)
+           ========================================================= */
+        .container-admin { 
+            padding: 40px; 
+            max-width: 1400px; /* Largura bem maior para telas profissionais */
+            margin: auto; 
+            display: grid; 
+            /* Caixas de cadastro no topo (2 por linha em telas grandes) */
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); 
+            gap: 30px; 
+        }
+        
+        .full-width { grid-column: 1 / -1; }
+        
+        .box { 
+            background: var(--bg-card); 
+            padding: 35px; 
+            border-radius: 12px; 
+            border: 1px solid var(--border-color); 
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+            scroll-margin-top: 100px; 
+        }
+        
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .box h3 { margin: 0; color: var(--text-main); font-size: 20px; }
+
+        /* =========================================================
+           4. FORMULÁRIOS PROFISSIONAIS
+           ========================================================= */
+        .form-group { margin-bottom: 20px; width: 100%; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; }
+        
+        input { 
+            width: 100%; padding: 14px 16px; background: var(--bg-input); 
+            color: white; border: 1px solid var(--border-color); 
+            border-radius: 8px; font-size: 15px; transition: 0.2s; outline: none;
+        }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(234, 29, 44, 0.15); }
+        input[type="file"] { padding: 10px; cursor: pointer; color: var(--text-muted); }
+
+        .btn-acao { color: white; border: none; padding: 14px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; width: 100%; transition: 0.2s; text-align: center; }
+        .btn-primary { background: var(--primary); }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); }
+        .btn-success:hover { background: var(--success-hover); }
+        .btn-danger { background: var(--danger); }
+        .btn-danger:hover { background: var(--danger-hover); }
+
+        /* =========================================================
+           5. TABELAS (CLIENTES E MENUS)
+           ========================================================= */
+        .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border-color); }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; background: var(--bg-subcard); }
+        th { background: #1c1e24; padding: 16px; text-align: left; font-size: 13px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid var(--border-color); }
+        td { padding: 16px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #262a33; }
+
+        /* =========================================================
+           6. GESTÃO DE LOJAS (O SEGREDO DO ALINHAMENTO)
+           ========================================================= */
+        .loja-card {
+            background: var(--bg-subcard);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .loja-grid-top {
+            display: grid;
+            grid-template-columns: 90px 1fr 160px; /* Coluna 1: Foto | Coluna 2: Inputs | Coluna 3: Botões */
+            gap: 30px;
+            align-items: start;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 25px;
+            margin-bottom: 25px;
+        }
+
+        .loja-inputs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .loja-actions { display: flex; flex-direction: column; gap: 10px; }
+        
+        .img-zoom { cursor: zoom-in; transition: transform 0.2s; border-radius: 10px; }
+        .img-zoom:hover { transform: scale(1.05); }
+
+        /* Ajuste responsivo extremo */
+        @media (max-width: 900px) {
+            .loja-grid-top { grid-template-columns: 1fr; }
+            .loja-actions { flex-direction: row; }
+        }
     </style>
 </head>
 <body>
-    <h2>🚀 Painel de Controle Admin</h2>
 
-    <div class="box">
-        <h3>1. Novo Restaurante</h3>
-        <input type="text" id="resNome" placeholder="Nome do Restaurante">
-        <input type="text" id="resCat" placeholder="Categoria (ex: Pizza)">
-        <input type="number" id="resTaxa" placeholder="Taxa de Entrega R$">
-        <input type="text" id="resFoto" placeholder="URL da Imagem do Logo">
-        <button onclick="apiPost('/api/admin/cadastrar-restaurante', {nome: resNome.value, categoria: resCat.value, taxa: resTaxa.value, foto_url: resFoto.value})">Salvar Restaurante</button>
-    </div>
+    <nav class="navbar-admin">
+        <div class="logo-admin">Danielzinho<span>Admin</span></div>
+        <ul class="nav-links">
+            <li><a href="#sec-novo-restaurante">Lojas</a></li>
+            <li><a href="#sec-novo-prato">Cardápios</a></li>
+            <li><a href="#sec-cupons">Cupons</a></li>
+            <li><a href="#sec-clientes">Clientes</a></li>
+            <li><a href="#sec-gestao-lojas">Gestão</a></li>
+            <li><a onclick="location.href='home.html'" style="color: var(--success);">Ir para Vitrine</a></li>
+            <li><a onclick="logout()" class="btn-nav">Sair do Painel</a></li>
+        </ul>
+    </nav>
 
-    <div class="box">
-        <h3>2. Adicionar Prato ao Menu</h3>
-        <input type="text" id="menuRes" placeholder="Nome exato do Restaurante">
-        <input type="text" id="menuNome" placeholder="Nome do Prato">
-        <input type="number" id="menuPreco" placeholder="Preço R$">
-        <input type="text" id="menuFoto" placeholder="URL da Imagem do Prato">
-        <button onclick="apiPost('/api/admin/adicionar-item', {restaurante: menuRes.value, nome: menuNome.value, preco: menuPreco.value, foto_url: menuFoto.value})">Adicionar ao Menu</button>
-    </div>
-
-    <div class="box">
-        <h3>3. Criar Cupom de Desconto</h3>
-        <input type="text" id="cupomCod" placeholder="Ex: PROMO10">
-        <input type="number" id="cupomValor" placeholder="Valor do Desconto R$">
-        <button onclick="apiPost('/api/admin/cadastrar-cupom', {codigo: cupomCod.value, valor: cupomValor.value})">Ativar Cupom</button>
-    </div>
-
-    <div class="box">
-        <h3>4. Gestão de Clientes e Saldos</h3>
-        <button onclick="adminCarregarUsuarios()" style="background:#2980b9; margin-bottom:15px;">🔄 Atualizar Lista de Usuários</button>
+    <div class="container-admin">
         
-        <table>
-            <thead>
-                <tr>
-                    <th>Foto</th>
-                    <th>Nome / E-mail</th>
-                    <th>Contato / Endereço</th>
-                    <th>Saldo na Carteira</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
-            <tbody id="tabelaUsuarios">
-                <tr>
-                    <td colspan="5" style="text-align: center; color: gray;">Carregando usuários...</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+        <div id="sec-novo-restaurante" class="box">
+            <div class="box-header"><h3>🏢 Nova Loja</h3></div>
+            <div class="form-group">
+                <label>Nome do Estabelecimento</label>
+                <input type="text" id="resNome" placeholder="Ex: Pizzaria Suprema">
+            </div>
+            <div class="form-group">
+                <label>Categoria principal</label>
+                <input type="text" id="resCat" placeholder="Ex: Pizza">
+            </div>
+            <div class="form-group">
+                <label>Taxa de Entrega (R$)</label>
+                <input type="number" id="resTaxa" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Logo / Fachada da Loja</label>
+                <input type="file" id="resFoto" accept="image/*">
+            </div>
+            <button class="btn-acao btn-primary" onclick="criarRestauranteUpload()">Criar Restaurante</button>
+        </div>
 
-    <div class="botoes-rodape">
-        <button onclick="location.href='home.html'" style="background: #555;">Ir para Vitrine do Site</button>
-        <button onclick="logout()" style="background: #ea1d2c;">🚪 Sair para o Login</button>
+        <div id="sec-novo-prato" class="box">
+            <div class="box-header"><h3>🍔 Adicionar ao Menu</h3></div>
+            <div class="form-group">
+                <label>Restaurante de Destino</label>
+                <input type="text" id="menuRes" placeholder="Nome exato da Loja cadastrada">
+            </div>
+            <div class="form-group">
+                <label>Nome do Prato/Produto</label>
+                <input type="text" id="menuNome" placeholder="Ex: X-Bacon Duplo">
+            </div>
+            <div class="form-group">
+                <label>Preço de Venda (R$)</label>
+                <input type="number" id="menuPreco" placeholder="0.00" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>Foto do Produto</label>
+                <input type="file" id="menuFoto" accept="image/*">
+            </div>
+            <button class="btn-acao btn-primary" onclick="criarItemUpload()">Vincular ao Cardápio</button>
+        </div>
+
+        <div id="sec-cupons" class="box full-width">
+            <div class="box-header"><h3>🎟️ Gerador de Cupons</h3></div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 200px; gap: 20px; align-items: end;">
+                <div class="form-group" style="margin:0;">
+                    <label>Código Promocional</label>
+                    <input type="text" id="cupomCod" placeholder="Ex: DANIEL10">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <label>Valor do Desconto (R$)</label>
+                    <input type="number" id="cupomValor" placeholder="0.00" step="0.01">
+                </div>
+                <button class="btn-acao btn-success" onclick="apiPost('/api/admin/cadastrar-cupom', {codigo: document.getElementById('cupomCod').value, valor: document.getElementById('cupomValor').value})">Ativar Cupom</button>
+            </div>
+        </div>
+
+        <div id="sec-clientes" class="box full-width">
+            <div class="box-header">
+                <h3>👥 Base de Clientes</h3>
+                <button class="btn-acao btn-primary" style="width: auto; padding: 10px 20px; margin: 0;" onclick="adminCarregarUsuarios()">🔄 Atualizar Base</button>
+            </div>
+            <div class="table-wrap">
+                <table id="tabelaUsuarios">
+                    <tr><td style="text-align: center; color: var(--text-muted);">Aguardando dados...</td></tr>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-gestao-lojas" class="box full-width">
+            <div class="box-header">
+                <h3>📋 Controle Geral de Estabelecimentos</h3>
+                <button class="btn-acao btn-primary" style="width: auto; padding: 10px 20px; margin: 0;" onclick="adminCarregarRestaurantesECardapios()">🔄 Atualizar Sistema</button>
+            </div>
+            <div id="listaRestaurantesAdmin">
+                <p style="text-align: center; color: var(--text-muted);">Buscando informações ativas...</p>
+            </div>
+        </div>
+
     </div>
 
     <script src="js/script.js"></script>
     <script>
+        // ==========================================================================
+        // LÓGICA DE ALIMENTAÇÃO DA INTERFACE DO ADMIN
+        // ==========================================================================
+
         async function apiPost(rota, dados) {
             const reply = await fetch("http://127.0.0.1:5001" + rota, {
                 method: 'POST',
@@ -81,15 +267,297 @@
                 body: JSON.stringify(dados)
             });
             if (reply.ok) {
-                alert("Operação realizada com sucesso!");
-                if(!rota.includes("cupom")) adminCarregarUsuarios();
+                alert("Operação confirmada no sistema!");
+                if(!rota.includes("cupom")) {
+                    adminCarregarUsuarios();
+                    adminCarregarRestaurantesECardapios();
+                }
             } else {
-                alert("Houve um erro na operação.");
+                const info = await reply.json();
+                alert("Falha na operação: " + (info.message || info.error || "Verifique os dados."));
             }
         }
+
+        async function criarRestauranteUpload() {
+            const nome = document.getElementById("resNome").value;
+            const cat = document.getElementById("resCat").value;
+            const taxa = document.getElementById("resTaxa").value;
+            
+            let fotoUrl = "";
+            const linkNovaFoto = await uploadArquivo(document.getElementById("resFoto"));
+            if(linkNovaFoto) fotoUrl = linkNovaFoto;
+
+            if(!nome || !cat || !taxa) return alert("Dados da loja incompletos.");
+            apiPost('/api/admin/cadastrar-restaurante', {nome: nome, categoria: cat, taxa: taxa, foto_url: fotoUrl});
+        }
+
+        async function criarItemUpload() {
+            const res = document.getElementById("menuRes").value;
+            const nome = document.getElementById("menuNome").value;
+            const preco = document.getElementById("menuPreco").value;
+            
+            let fotoUrl = "";
+            const linkNovaFoto = await uploadArquivo(document.getElementById("menuFoto"));
+            if(linkNovaFoto) fotoUrl = linkNovaFoto;
+
+            if(!res || !nome || !preco) return alert("Dados do prato incompletos.");
+            apiPost('/api/admin/adicionar-item', {restaurante: res, nome: nome, preco: preco, foto_url: fotoUrl});
+        }
+
+        // =========================================================
+        // RENDERIZAÇÃO DA TABELA DE CLIENTES
+        // =========================================================
+        async function adminCarregarUsuarios() {
+            const container = document.getElementById("tabelaUsuarios");
+            if (!container) return;
+            container.innerHTML = "<tr><td style='text-align:center;'>Conectando ao banco...</td></tr>";
+
+            try {
+                const resposta = await fetch("http://127.0.0.1:5001/api/admin/usuarios", { cache: "no-store" });
+                const listaUsuarios = await resposta.json();
+                
+                container.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th style="width: 80px; text-align: center;">Avatar</th>
+                            <th>Identificação</th>
+                            <th>Contato / Entrega</th>
+                            <th style="width: 280px;">Gestão Financeira</th>
+                            <th style="width: 120px; text-align: center;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+
+                if (listaUsuarios.length === 0) {
+                    container.innerHTML += "<tr><td colspan='5' style='text-align:center;'>Nenhum cliente registrado.</td></tr></tbody>";
+                    return;
+                }
+
+                listaUsuarios.forEach(u => {
+                    if (u.email === "admin") return;
+
+                    const tr = document.createElement("tr");
+                    tr.innerHTML = `
+                        <td style="text-align: center;">
+                            <img src="${u.foto_url}" class="img-zoom" onclick="if(typeof abrirImagemFullscreen === 'function') abrirImagemFullscreen(this.src)" style="width:48px; height:48px; border-radius:50%; object-fit:cover; border: 2px solid var(--border-color);">
+                        </td>
+                        <td>
+                            <strong style="font-size: 15px;">${u.nome}</strong><br>
+                            <span style="color: var(--text-muted); font-size: 13px;">${u.email}</span>
+                        </td>
+                        <td>
+                            <div style="margin-bottom: 4px;">📞 ${u.telefone || '<span style="color:var(--text-muted);">Pendente</span>'}</div>
+                            <div>📍 ${u.endereco || '<span style="color:var(--text-muted);">Pendente</span>'}</div>
+                        </td>
+                        <td>
+                            <div style="color: var(--success); font-weight: 800; font-size: 18px; margin-bottom: 8px;">R$ ${u.saldo.toFixed(2)}</div>
+                            <div style="display:flex; gap:8px;">
+                                <input type="number" id="saldo_${u.id}" placeholder="Novo Valor" style="padding: 8px; margin: 0; font-size: 13px;">
+                                <button onclick="adminAlterarSaldo(${u.id})" class="btn-acao btn-primary" style="width: auto; padding: 8px 16px; margin: 0;">Gravar</button>
+                            </div>
+                        </td>
+                        <td style="text-align: center;">
+                            <button onclick="adminDeletarUsuario(${u.id})" class="btn-acao btn-danger" style="margin: 0;">Remover Conta</button>
+                        </td>
+                    `;
+                    container.appendChild(tr);
+                });
+                container.innerHTML += "</tbody>";
+            } catch (erro) {
+                container.innerHTML = "<tr><td colspan='5' style='text-align:center; color: var(--danger);'>Falha ao sincronizar clientes.</td></tr>";
+            }
+        }
+
+        async function adminDeletarUsuario(id) {
+            if (!confirm("⚠️ ATENÇÃO: Esta ação é irreversível. Apagar cliente da base de dados?")) return;
+            try {
+                const resposta = await fetch(`http://127.0.0.1:5001/api/admin/usuario/deletar/${id}`, { method: 'DELETE' });
+                if (resposta.ok) adminCarregarUsuarios();
+            } catch (erro) { alert("Falha na comunicação."); }
+        }
+
+        async function adminAlterarSaldo(id) {
+            const input = document.getElementById(`saldo_${id}`);
+            const valor = input ? input.value : "";
+            if (!valor || parseFloat(valor) < 0) return alert("Valor inválido.");
+
+            try {
+                const resposta = await fetch("http://127.0.0.1:5001/api/admin/usuario/saldo", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, saldo: valor })
+                });
+                if (resposta.ok) adminCarregarUsuarios();
+            } catch (erro) { alert("Falha ao salvar saldo."); }
+        }
+
+        // =========================================================
+        // RENDERIZAÇÃO DA GESTÃO DE LOJAS (GRID PROFISSIONAL)
+        // =========================================================
+        async function adminCarregarRestaurantesECardapios() {
+            const container = document.getElementById("listaRestaurantesAdmin");
+            if (!container) return;
+            container.innerHTML = "<p style='text-align:center; color: var(--text-muted);'>Sincronizando estabelecimentos...</p>";
+
+            try {
+                const resLoja = await fetch("http://127.0.0.1:5001/api/restaurantes", { cache: "no-store" });
+                const lojas = await resLoja.json();
+                container.innerHTML = "";
+                
+                if (lojas.length === 0) {
+                    container.innerHTML = "<p style='text-align:center; color: var(--text-muted);'>Nenhuma loja em operação.</p>";
+                    return;
+                }
+
+                for (const loja of lojas) {
+                    const resMenu = await fetch(`http://127.0.0.1:5001/api/menu/${loja.nome}`, { cache: "no-store" });
+                    const menu = await resMenu.json();
+
+                    const divLoja = document.createElement("div");
+                    divLoja.className = "loja-card";
+
+                    let linhasCardapio = "";
+                    menu.forEach(item => {
+                        linhasCardapio += `
+                            <tr>
+                                <td style="width: 120px;">
+                                    <img id="imgItem_${item.id}" src="${item.foto_url}" class="img-zoom" onclick="if(typeof abrirImagemFullscreen === 'function') abrirImagemFullscreen(this.src)" style="width:50px; height:50px; border-radius:8px; object-fit:cover; margin-bottom: 8px; display: block; border: 1px solid var(--border-color);">
+                                    <input type="file" id="itemFoto_${item.id}" accept="image/*" style="padding: 0; font-size: 11px; background: transparent; border: none;">
+                                </td>
+                                <td>
+                                    <input type="text" id="itemNome_${item.id}" value="${item.nome}" style="margin: 0;">
+                                </td>
+                                <td style="width: 140px;">
+                                    <input type="number" id="itemPreco_${item.id}" value="${item.preco}" step="0.01" style="margin: 0;">
+                                </td>
+                                <td style="width: 220px;">
+                                    <div style="display: flex; gap: 10px;">
+                                        <button onclick="adminEditarItem(${item.id})" class="btn-acao btn-success" style="margin: 0;">Atualizar</button>
+                                        <button onclick="adminDeletarItem(${item.id})" class="btn-acao btn-danger" style="margin: 0;">Excluir</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    divLoja.innerHTML = `
+                        <div class="loja-grid-top">
+                            <div>
+                                <img id="imgLoja_${loja.id}" src="${loja.foto_url}" class="img-zoom" onclick="if(typeof abrirImagemFullscreen === 'function') abrirImagemFullscreen(this.src)" style="width:90px; height:90px; border-radius:16px; object-fit:cover; border: 3px solid var(--border-color);">
+                            </div>
+                            
+                            <div class="loja-inputs-grid">
+                                <div class="form-group" style="margin: 0;">
+                                    <label>Nome Fantasia</label>
+                                    <input type="text" id="lojaNome_${loja.id}" value="${loja.nome}">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label>Segmento / Categoria</label>
+                                    <input type="text" id="lojaCat_${loja.id}" value="${loja.categoria}">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label>Frete Base (R$)</label>
+                                    <input type="number" id="lojaTaxa_${loja.id}" value="${loja.taxa}" step="0.01">
+                                </div>
+                                <div class="form-group" style="margin: 0;">
+                                    <label>Classificação (⭐)</label>
+                                    <input type="number" id="lojaNota_${loja.id}" value="${loja.nota}" step="0.1" min="1" max="5">
+                                </div>
+                                <div class="form-group" style="margin: 0; grid-column: 1 / -1;">
+                                    <label>Atualizar Capa (Arquivo PC)</label>
+                                    <input type="file" id="lojaFoto_${loja.id}" accept="image/*">
+                                </div>
+                            </div>
+                            
+                            <div class="loja-actions">
+                                <button onclick="adminEditarRestaurante(${loja.id})" class="btn-acao btn-success" style="margin: 0;">Salvar Alterações</button>
+                                <button onclick="adminDeletarRestaurante(${loja.id})" class="btn-acao btn-danger" style="margin: 0;">Encerrar Loja</button>
+                            </div>
+                        </div>
+                        
+                        <h4 style="margin: 0 0 15px 0; color: var(--primary); font-size: 16px;">VINCULADO AO MENU</h4>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Nomenclatura</th>
+                                        <th>Preço Atual</th>
+                                        <th>Controle</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${linhasCardapio || '<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">O menu deste estabelecimento está vazio.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    container.appendChild(divLoja);
+                }
+            } catch (err) {
+                container.innerHTML = "<p style='text-align:center; color:var(--danger);'>Falha ao sincronizar dados operacionais.</p>";
+            }
+        }
+
+        async function adminEditarRestaurante(id) {
+            const nome = document.getElementById(`lojaNome_${id}`).value.trim();
+            const categoria = document.getElementById(`lojaCat_${id}`).value.trim();
+            const taxa = document.getElementById(`lojaTaxa_${id}`).value;
+            const nota = document.getElementById(`lojaNota_${id}`).value;
+            
+            let fotoFinal = document.getElementById(`imgLoja_${id}`).src;
+            const arquivoNovaFoto = document.getElementById(`lojaFoto_${id}`);
+            if(arquivoNovaFoto.files.length > 0) {
+                const link = await uploadArquivo(arquivoNovaFoto);
+                if(link) fotoFinal = link;
+            }
+
+            if(!nome || !categoria || !taxa || !nota) return alert("Campos essenciais ausentes.");
+
+            const res = await fetch("http://127.0.0.1:5001/api/admin/restaurante/atualizar", {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, nome, categoria, taxa, nota, foto_url: fotoFinal })
+            });
+            if(res.ok) { alert("Loja atualizada."); adminCarregarRestaurantesECardapios(); }
+        }
+
+        async function adminDeletarRestaurante(id) {
+            if(!confirm("⚠️ RISCO DE PERDA DE DADOS: Confirmar exclusão do estabelecimento e de todo o cardápio vinculado?")) return;
+            const res = await fetch(`http://127.0.0.1:5001/api/admin/restaurante/deletar/${id}`, { method: 'DELETE' });
+            if(res.ok) adminCarregarRestaurantesECardapios();
+        }
+
+        async function adminEditarItem(id) {
+            const nome = document.getElementById(`itemNome_${id}`).value.trim();
+            const preco = document.getElementById(`itemPreco_${id}`).value;
+            
+            let fotoFinal = document.getElementById(`imgItem_${id}`).src;
+            const arquivoNovaFoto = document.getElementById(`itemFoto_${id}`);
+            if(arquivoNovaFoto.files.length > 0) {
+                const link = await uploadArquivo(arquivoNovaFoto);
+                if(link) fotoFinal = link;
+            }
+
+            if(!nome || !preco) return alert("Nomenclatura ou preço em branco.");
+
+            const res = await fetch("http://127.0.0.1:5001/api/admin/item/atualizar", {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id, nome, preco, foto_url: fotoFinal })
+            });
+            if(res.ok) { alert("Produto atualizado."); adminCarregarRestaurantesECardapios(); }
+        }
+
+        async function adminDeletarItem(id) {
+            if(!confirm("Remover este item do menu?")) return;
+            const res = await fetch(`http://127.0.0.1:5001/api/admin/item/deletar/${id}`, { method: 'DELETE' });
+            if(res.ok) adminCarregarRestaurantesECardapios();
+        }
         
+        // Auto-carregamento inicial
         document.addEventListener("DOMContentLoaded", () => {
             adminCarregarUsuarios();
+            adminCarregarRestaurantesECardapios();
         });
     </script>
 </body>
