@@ -1,21 +1,29 @@
 import os
-from flask import Flask, jsonify, request
+import time
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Configuração robusta de CORS para desenvolvimento local
+# Configuração de CORS
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=False)
 
-# Configuração do Banco de Dados SQLite (Persistência permanente)
+# Configuração do Banco de Dados SQLite
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# Configuração da Pasta de Uploads
+UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 db = SQLAlchemy(app)
 
-# --- MODELOS DO BANCO DE DADOS (TABELAS) ---
+# --- MODELOS DO BANCO DE DADOS ---
 
 class Usuario(db.Model):
     __tablename__ = 'usuarios'
@@ -23,7 +31,7 @@ class Usuario(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha = db.Column(db.String(120), nullable=False)
     nome = db.Column(db.String(100), default="Usuário Faminto")
-    foto_url = db.Column(db.String(300), default="/img/DFoods.jpg")
+    foto_url = db.Column(db.String(300), default="img/DFoods.jpg")
     endereco = db.Column(db.String(200), default="")
     telefone = db.Column(db.String(20), default="")
     saldo = db.Column(db.Float, default=0.0)
@@ -70,6 +78,7 @@ class ItemMenu(db.Model):
 
     def to_dict(self):
         return {
+            "id": self.id,
             "nome": self.nome,
             "preco": self.preco,
             "foto_url": self.foto_url or "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150"
@@ -81,15 +90,17 @@ class Cupom(db.Model):
     codigo = db.Column(db.String(30), unique=True, nullable=False)
     valor = db.Column(db.Float, nullable=False)
 
+class Avaliacao(db.Model):
+    __tablename__ = 'avaliacoes'
+    id = db.Column(db.Integer, primary_key=True)
+    restaurante_nome = db.Column(db.String(100), db.ForeignKey('restaurantes.nome'), nullable=False)
+    nota = db.Column(db.Float, nullable=False)
+
 # --- INICIALIZAÇÃO SEGURA DO BANCO ---
 with app.app_context():
     db.create_all()
     
-    # Se o banco estiver vazio, carrega todos os restaurantes e o cardápio atualizado!
     if not Restaurante.query.first():
-        print("Criando banco de dados com cardápio completo...")
-        
-        # 1. Adicionando Restaurantes com as Notas e Taxas atualizadas
         res_padrao = [
             Restaurante(nome="Danielzinho Burger", categoria="Hambúrguer", nota=4.9, taxa=5.00, foto_url="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150"),
             Restaurante(nome="Pizzaria Suprema", categoria="Pizza", nota=4.8, taxa=7.50, foto_url="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=150"),
@@ -99,36 +110,14 @@ with app.app_context():
         ]
         db.session.add_all(res_padrao)
         
-        # 2. Adicionando a sua lista de Menus Personalizada (Com Imagens correspondentes)
         menu_padrao = [
-            # Danielzinho Burger
             ItemMenu(nome="Super X-Tudo", preco=25.90, restaurante_nome="Danielzinho Burger", foto_url="https://images.unsplash.com/photo-1550547660-d9450f859349?w=150"),
             ItemMenu(nome="Smash Burger", preco=22.00, restaurante_nome="Danielzinho Burger", foto_url="https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=150"),
             ItemMenu(nome="Batata Suprema", preco=15.00, restaurante_nome="Danielzinho Burger", foto_url="https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=150"),
-            ItemMenu(nome="Milkshake Oreo", preco=18.00, restaurante_nome="Danielzinho Burger", foto_url="https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=150"),
-            
-            # Pizzaria Suprema
             ItemMenu(nome="Pizza Calabresa", preco=49.90, restaurante_nome="Pizzaria Suprema", foto_url="https://images.unsplash.com/photo-1534308983496-4fabb1a015ee?w=150"),
-            ItemMenu(nome="Pizza Frango Catupiry", preco=55.00, restaurante_nome="Pizzaria Suprema", foto_url="https://images.unsplash.com/photo-1593560708920-61dd98c46a4e?w=150"),
-            ItemMenu(nome="Pizza Portuguesa", preco=52.00, restaurante_nome="Pizzaria Suprema", foto_url="https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=150"),
-            ItemMenu(nome="Coca-Cola 2L", preco=14.00, restaurante_nome="Pizzaria Suprema", foto_url="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150"),
-            
-            # Sushi House
             ItemMenu(nome="Combo 20 peças", preco=44.90, restaurante_nome="Sushi House", foto_url="https://images.unsplash.com/photo-1611143669185-af224c5e3252?w=150"),
-            ItemMenu(nome="Temaki Salmão", preco=28.00, restaurante_nome="Sushi House", foto_url="https://images.unsplash.com/photo-1553621042-f6e147245754?w=150"),
-            ItemMenu(nome="Hot Roll", preco=24.90, restaurante_nome="Sushi House", foto_url="https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=150"),
-            ItemMenu(nome="Guaraná Lata", preco=6.00, restaurante_nome="Sushi House", foto_url="https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=150"),
-            
-            # Açaí Tropical
             ItemMenu(nome="Açaí 500ml", preco=18.00, restaurante_nome="Açaí Tropical", foto_url="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=150"),
-            ItemMenu(nome="Açaí 700ml", preco=24.00, restaurante_nome="Açaí Tropical", foto_url="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=150"),
-            ItemMenu(nome="Combo Açaí + Banana", preco=28.00, restaurante_nome="Açaí Tropical", foto_url="https://images.unsplash.com/photo-1550411294-81768ae2fddf?w=150"),
-            
-            # Café Brasil
-            ItemMenu(nome="Cappuccino", preco=12.00, restaurante_nome="Café Brasil", foto_url="https://images.unsplash.com/photo-1541167760496-1628856ab772?w=150"),
-            ItemMenu(nome="Pão de Queijo", preco=8.00, restaurante_nome="Café Brasil", foto_url="https://images.unsplash.com/photo-1598142898083-059fb920a6a2?w=150"),
-            ItemMenu(nome="Café Expresso", preco=7.00, restaurante_nome="Café Brasil", foto_url="https://images.unsplash.com/photo-1511920170033-f8396924c348?w=150"),
-            ItemMenu(nome="Torta de Chocolate", preco=16.00, restaurante_nome="Café Brasil", foto_url="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150")
+            ItemMenu(nome="Cappuccino", preco=12.00, restaurante_nome="Café Brasil", foto_url="https://images.unsplash.com/photo-1541167760496-1628856ab772?w=150")
         ]
         db.session.add_all(menu_padrao)
         
@@ -144,7 +133,34 @@ def handle_options_requests():
     if request.method == 'OPTIONS':
         return app.make_default_options_response()
 
-# --- ROTAS DE AUTENTICAÇÃO REAL (VÍNCULO COM BANCO) ---
+# --- ROTAS DE UPLOAD DE IMAGENS ---
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/api/upload', methods=['POST', 'OPTIONS'])
+def api_upload_imagem():
+    if request.method == 'OPTIONS': 
+        return '', 204
+    
+    if 'arquivo' not in request.files:
+        return jsonify({"success": False, "message": "Nenhum arquivo enviado"}), 400
+        
+    file = request.files['arquivo']
+    if file.filename == '':
+        return jsonify({"success": False, "message": "Nome de arquivo vazio"}), 400
+        
+    if file:
+        filename = secure_filename(file.filename)
+        novo_nome = f"{int(time.time())}_{filename}"
+        caminho_completo = os.path.join(app.config['UPLOAD_FOLDER'], novo_nome)
+        file.save(caminho_completo)
+        
+        url_imagem = f"http://127.0.0.1:5001/uploads/{novo_nome}"
+        return jsonify({"success": True, "url": url_imagem}), 200
+
+# --- ROTAS DE AUTENTICAÇÃO E PERFIL ---
 
 @app.route('/api/usuario/cadastrar', methods=['POST', 'OPTIONS'])
 def api_cadastrar_usuario():
@@ -187,8 +203,18 @@ def obter_perfil(email):
     if request.method == 'OPTIONS': 
         return '', 204
         
+    if email == "admin":
+        return jsonify({
+            "id": 0,
+            "email": "admin",
+            "nome": "Administrador do Sistema",
+            "foto_url": "img/DFoods.jpg",
+            "endereco": "Painel de Controle Central",
+            "telefone": "Acesso Restrito",
+            "saldo": 99999.0
+        }), 200
+        
     user = Usuario.query.filter_by(email=email).first()
-    
     if not user:
         return jsonify({"success": False, "message": "Usuário inexistente na base SQLite."}), 404
             
@@ -200,6 +226,10 @@ def atualizar_perfil():
         return '', 204
     dados = request.json
     email = dados.get("email")
+    
+    if email == "admin":
+        return jsonify({"success": True, "user": dados}), 200
+        
     user = Usuario.query.filter_by(email=email).first()
     if not user: 
         return jsonify({"error": "Usuário não encontrado"}), 404
@@ -256,6 +286,35 @@ def validar_cupom(codigo):
         return '', 204
     cupom = Cupom.query.filter_by(codigo=codigo.upper()).first()
     return jsonify({"desconto": cupom.valor if cupom else 0.0})
+
+@app.route('/api/restaurante/avaliar', methods=['POST', 'OPTIONS'])
+def avaliar_restaurante():
+    if request.method == 'OPTIONS': 
+        return '', 204
+    
+    dados = request.json
+    nome_res = dados.get("restaurante")
+    nota_dada = float(dados.get("nota"))
+
+    res = Restaurante.query.filter_by(nome=nome_res).first()
+    if not res:
+        return jsonify({"success": False, "message": "Loja não encontrada."}), 404
+
+    nova_aval = Avaliacao(restaurante_nome=nome_res, nota=nota_dada)
+    db.session.add(nova_aval)
+    db.session.commit()
+
+    todas_avaliacoes = Avaliacao.query.filter_by(restaurante_nome=nome_res).all()
+    
+    soma_notas = (res.nota * 3) + sum(a.nota for a in todas_avaliacoes)
+    total_votos = 3 + len(todas_avaliacoes)
+    
+    nova_media = soma_notas / total_votos
+    res.nota = round(nova_media, 1)
+    
+    db.session.commit()
+
+    return jsonify({"success": True, "nova_nota": res.nota})
 
 # --- ROTAS EXCLUSIVAS DO ADMINISTRADOR ---
 
@@ -346,6 +405,85 @@ def cadastrar_cupom():
         db.session.add(Cupom(codigo=codigo, valor=float(dados['valor'])))
     db.session.commit()
     return jsonify({"success": True})
+
+@app.route('/api/admin/restaurante/atualizar', methods=['POST', 'OPTIONS'])
+def admin_atualizar_restaurante():
+    if request.method == 'OPTIONS': 
+        return '', 204
+    dados = request.json
+    res_id = dados.get("id")
+    res = Restaurante.query.get(res_id)
+    if not res: 
+        return jsonify({"success": False, "message": "Não encontrado"}), 404
+    
+    velho_nome = res.nome
+    novo_nome = dados.get("nome", res.nome).strip()
+    
+    if velho_nome != novo_nome:
+        if Restaurante.query.filter_by(nome=novo_nome).first():
+            return jsonify({"success": False, "message": "Esse nome já está em uso"}), 400
+        itens_vinculados = ItemMenu.query.filter_by(restaurante_nome=velho_nome).all()
+        for item in itens_vinculados:
+            item.restaurante_nome = novo_nome
+
+    res.nome = novo_nome
+    res.categoria = dados.get("categoria", res.categoria)
+    res.taxa = float(dados.get("taxa", res.taxa))
+    
+    if "nota" in dados:
+        res.nota = float(dados.get("nota"))
+        
+    res.foto_url = dados.get("foto_url", res.foto_url)
+    
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/admin/restaurante/deletar/<int:res_id>', methods=['DELETE', 'OPTIONS'])
+def admin_deletar_restaurante(res_id):
+    if request.method == 'OPTIONS': 
+        return '', 204
+    res = Restaurante.query.get(res_id)
+    if not res: 
+        return jsonify({"success": False}), 404
+    try:
+        db.session.delete(res)
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False}), 400
+
+@app.route('/api/admin/item/atualizar', methods=['POST', 'OPTIONS'])
+def admin_atualizar_item():
+    if request.method == 'OPTIONS': 
+        return '', 204
+    dados = request.json
+    item_id = dados.get("id")
+    item = ItemMenu.query.get(item_id)
+    if not item: 
+        return jsonify({"success": False}), 404
+    
+    item.nome = dados.get("nome", item.nome)
+    item.preco = float(dados.get("preco", item.preco))
+    item.foto_url = dados.get("foto_url", item.foto_url)
+    
+    db.session.commit()
+    return jsonify({"success": True})
+
+@app.route('/api/admin/item/deletar/<int:item_id>', methods=['DELETE', 'OPTIONS'])
+def admin_deletar_item(item_id):
+    if request.method == 'OPTIONS': 
+        return '', 204
+    item = ItemMenu.query.get(item_id)
+    if not item: 
+        return jsonify({"success": False}), 404
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False}), 400
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
