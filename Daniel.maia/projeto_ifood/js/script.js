@@ -60,7 +60,6 @@ function verificarEExibirBotaoAdmin() {
         li.id = "btnVoltarAdminNav";
         li.innerHTML = `<a onclick="window.location.href='admin.html'" style="color: #2980b9; font-weight: bold; cursor: pointer;">⚙️ Painel Admin</a>`;
         
-        // Insere o botão do admin antes do botão de Sair
         navLinks.insertBefore(li, navLinks.lastElementChild);
     }
 }
@@ -80,7 +79,6 @@ function mostrarToast(mensagem) {
     
     document.body.appendChild(toast);
     
-    // Animação para sumir depois de 3 segundos
     setTimeout(() => {
         if (toast.parentNode) {
             toast.classList.add("sumir-toast");
@@ -109,7 +107,6 @@ async function login() {
         return;
     }
 
-    // Acesso Mestre do Administrador
     if (email === "admin" && senha === "1234") {
         localStorage.setItem("usuarioLogado", "admin");
         window.location.href = "admin.html";
@@ -163,7 +160,6 @@ async function cadastrar() {
         if (resposta.ok && dados.success) {
             alert("✨ Cadastro gravado com sucesso! Redirecionando para a tela de login...");
             
-            // Limpa os campos após o sucesso
             nomeInput.value = "";
             emailInput.value = "";
             senhaInput.value = "";
@@ -194,7 +190,7 @@ function logout() {
 }
 
 // ==========================================================================
-// 5. VITRINE DE LOJAS (PÁGINA HOME) E FILTRO EM TEMPO REAL
+// 5. VITRINE DE LOJAS E FILTRO EM TEMPO REAL
 // ==========================================================================
 
 async function carregarRestaurantes() {
@@ -214,7 +210,7 @@ async function carregarRestaurantes() {
         renderizarRestaurantes(listaRestaurantesOriginal);
     } catch (erro) {
         console.error("Erro no fetch de restaurantes:", erro);
-        lista.innerHTML = "<p style='text-align:center;'>❌ Erro ao conectar ao servidor Python.</p>";
+        lista.innerHTML = "<p style='text-align:center;'>❌ Erro ao conectar ao servidor.</p>";
     }
 }
 
@@ -236,7 +232,7 @@ function renderizarRestaurantes(arrayDados) {
         
         div.innerHTML = `
             <div class="card-info">
-                <img src="${r.foto_url}" class="img-loja" alt="${r.nome}">
+                <img src="${r.foto_url}" class="img-loja img-zoom" alt="${r.nome}" onclick="abrirImagemFullscreen(this.src)">
                 <div>
                     <span class="nome-item-card">${r.nome}</span>
                     <small>${r.categoria} • Nota ${r.nota.toFixed(1)} • Entrega R$ ${taxa}</small>
@@ -276,15 +272,21 @@ function abrirRestaurante(nome) {
 // ==========================================================================
 
 async function carregarMenu() {
-    const nomeOriginal = localStorage.getItem("restauranteAtual") || "";
+
+    const nomeOriginal =
+        localStorage.getItem("restauranteAtual") || "";
+
     const nome = nomeOriginal.trim();
-    
-    const tituloMenu = document.getElementById("nomeRestaurante");
+
+    const tituloMenu =
+        document.getElementById("nomeRestaurante");
+
     if (tituloMenu) {
         tituloMenu.innerText = nome || "Cardápio";
     }
 
     const div = document.getElementById("menu");
+
     if (!div) return;
 
     div.innerHTML = `
@@ -295,34 +297,95 @@ async function carregarMenu() {
     `;
 
     try {
-        const resposta = await fetch(`http://127.0.0.1:5001/api/menu/${nome}`, { cache: "no-store" });
+
+        // =========================
+        // BUSCA TODOS RESTAURANTES
+        // =========================
+
+        const respostaRestaurantes = await fetch(
+            "http://127.0.0.1:5001/api/restaurantes",
+            { cache: "no-store" }
+        );
+
+        const restaurantes =
+            await respostaRestaurantes.json();
+
+        // Restaurante atual
+        const restauranteAtual =
+            restaurantes.find(
+                r => r.nome.trim() === nome
+            );
+
+        // Taxa de entrega correta
+        const taxaEntrega =
+            restauranteAtual?.taxa || 0;
+
+        // =========================
+        // BUSCA CARDÁPIO
+        // =========================
+
+        const resposta = await fetch(
+            `http://127.0.0.1:5001/api/menu/${nome}`,
+            { cache: "no-store" }
+        );
+
         const menu = await resposta.json();
 
         div.innerHTML = "";
-        
+
         menu.forEach(item => {
+
             const card = document.createElement("div");
+
             card.classList.add("card");
-            
+
             card.innerHTML = `
                 <div class="card-info">
-                    <img src="${item.foto_url}" class="img-prato" alt="${item.nome}">
+
+                    <img
+                        src="${item.foto_url}"
+                        class="img-prato img-zoom"
+                        alt="${item.nome}"
+                        onclick="abrirImagemFullscreen(this.src)"
+                    >
+
                     <div>
-                        <span class="nome-item-card">${item.nome}</span>
-                        <small>R$ ${item.preco.toFixed(2)}</small>
+                        <span class="nome-item-card">
+                            ${item.nome}
+                        </span>
+
+                        <small>
+                            R$ ${item.preco.toFixed(2)}
+                        </small>
                     </div>
+
                 </div>
-                <button onclick="adicionarCarrinho('${item.nome}', ${item.preco}, '${nome}')">Adicionar</button>
+
+                <button
+                    onclick="adicionarCarrinho(
+                        '${item.nome}',
+                        ${item.preco},
+                        '${nome}',
+                        ${taxaEntrega}
+                    )"
+                >
+                    Adicionar
+                </button>
             `;
-            
+
             div.appendChild(card);
         });
+
     } catch (erro) {
+
         console.error("Erro ao carregar menu:", erro);
-        div.innerHTML = "<p style='text-align:center;'>❌ Erro ao carregar menu.</p>";
+
+        div.innerHTML =
+            "<p style='text-align:center;'>❌ Erro ao carregar menu.</p>";
     }
 
     carregarDesconto();
+
     atualizarCarrinho();
 }
 
@@ -330,229 +393,485 @@ async function carregarMenu() {
 // 7. GESTÃO DE COMPRAS LOCAIS (SACOLA E OPERAÇÕES)
 // ==========================================================================
 
-function adicionarCarrinho(nomeItem, precoItem, nomeRestaurante) {
-    const chave = getChaveCarrinho();
-    const carrinho = JSON.parse(localStorage.getItem(chave)) || [];
+function adicionarCarrinho(
+    nomeItem,
+    precoItem,
+    nomeRestaurante,
+    taxaEntrega = 0
+) {
 
-    carrinho.push({ 
-        nome: nomeItem, 
-        preco: precoItem, 
-        restaurante: nomeRestaurante 
+    const chave = getChaveCarrinho();
+
+    const carrinho =
+        JSON.parse(localStorage.getItem(chave)) || [];
+
+    carrinho.push({
+        nome: nomeItem,
+        preco: precoItem,
+        restaurante: nomeRestaurante,
+        taxa: taxaEntrega
     });
-    
-    localStorage.setItem(chave, JSON.stringify(carrinho));
+
+    localStorage.setItem(
+        chave,
+        JSON.stringify(carrinho)
+    );
 
     atualizarCarrinho();
-    mostrarToast(`"${nomeItem}" foi adicionado à sacola!`);
+
+    mostrarToast(
+        `"${nomeItem}" foi adicionado à sacola!`
+    );
 }
 
 function removerItem(index) {
+
     const chave = getChaveCarrinho();
-    const carrinho = JSON.parse(localStorage.getItem(chave)) || [];
+
+    const carrinho =
+        JSON.parse(localStorage.getItem(chave)) || [];
 
     carrinho.splice(index, 1);
-    localStorage.setItem(chave, JSON.stringify(carrinho));
+
+    localStorage.setItem(
+        chave,
+        JSON.stringify(carrinho)
+    );
 
     atualizarCarrinho();
 }
 
 function atualizarCarrinho() {
-    const ul = document.getElementById("listaCarrinho");
+
+    const ul =
+        document.getElementById("listaCarrinho");
+
     const chave = getChaveCarrinho();
-    const carrinho = JSON.parse(localStorage.getItem(chave)) || [];
-    
+
+    const carrinho =
+        JSON.parse(localStorage.getItem(chave)) || [];
+
     atualizarContadorNavbar(carrinho.length);
 
-    if (!ul) return; 
-    
+    if (!ul) return;
+
     ul.innerHTML = "";
+
     let subtotal = 0;
 
+    // =========================
+    // SOMA FRETES DIFERENTES
+    // =========================
+
+    const taxasPorRestaurante = {};
+
     carrinho.forEach((item, index) => {
+
         subtotal += item.preco;
-        
+
+        // Guarda taxa apenas 1 vez por loja
+        if (
+            !taxasPorRestaurante[item.restaurante]
+        ) {
+            taxasPorRestaurante[item.restaurante] =
+                item.taxa || 0;
+        }
+
         const li = document.createElement("li");
+
         li.style.display = "flex";
         li.style.justifyContent = "space-between";
         li.style.alignItems = "center";
         li.style.marginBottom = "8px";
-        
+
         li.innerHTML = `
             <div>
-                <span style="font-size:14px; font-weight:500;">${item.nome}</span><br>
-                <small style="color:gray; font-size:11px;">${item.restaurante}</small>
+
+                <span
+                    style="
+                        font-size:14px;
+                        font-weight:500;
+                    "
+                >
+                    ${item.nome}
+                </span>
+
+                <br>
+
+                <small
+                    style="
+                        color:gray;
+                        font-size:11px;
+                    "
+                >
+                    ${item.restaurante}
+                </small>
+
             </div>
+
             <div>
-                <span style="font-size:14px; font-weight:600; margin-right:10px;">R$ ${item.preco.toFixed(2)}</span>
-                <button onclick="removerItem(${index})" class="btn-remover">Remover</button>
+
+                <span
+                    style="
+                        font-size:14px;
+                        font-weight:600;
+                        margin-right:10px;
+                    "
+                >
+                    R$ ${item.preco.toFixed(2)}
+                </span>
+
+                <button
+                    onclick="removerItem(${index})"
+                    class="btn-remover"
+                >
+                    Remover
+                </button>
+
             </div>
         `;
-        
+
         ul.appendChild(li);
     });
 
-    let totalFinal = subtotal - descontoAtivo;
+    // =========================
+    // TOTAL DE FRETES
+    // =========================
+
+    const totalEntrega =
+        Object.values(taxasPorRestaurante)
+            .reduce((acc, taxa) => acc + taxa, 0);
+
+    // =========================
+    // DESCONTO 30%
+    // =========================
+
+    const desconto30 =
+        (subtotal + totalEntrega) * 0.30;
+
+    // =========================
+    // TOTAL FINAL
+    // =========================
+
+    let totalFinal =
+        subtotal +
+        totalEntrega -
+        desconto30;
+
     if (totalFinal < 0) {
         totalFinal = 0;
     }
 
-    const totalEl = document.getElementById("total");
+    const totalEl =
+        document.getElementById("total");
+
     if (totalEl) {
-        if (descontoAtivo > 0) {
-            totalEl.innerHTML = `
-                <small style="text-decoration: line-through; color: gray;">Subtotal: R$ ${subtotal.toFixed(2)}</small><br>
-                <small style="color: #2fbe48; font-weight:600;">Desconto: -R$ ${descontoAtivo.toFixed(2)}</small><br>
-                <strong style="font-size:18px; color:black;">Total: R$ ${totalFinal.toFixed(2)}</strong>
-            `;
-        } else {
-            totalEl.innerHTML = `
-                <strong style="font-size:18px; color:black;">Total: R$ ${totalFinal.toFixed(2)}</strong>
-            `;
-        }
+
+        totalEl.innerHTML = `
+
+            <small style="color:#555;">
+
+                🛒 Subtotal:
+                R$ ${subtotal.toFixed(2)}
+
+            </small>
+
+            <br>
+
+            <small style="color:#555;">
+
+                🚚 Entrega:
+                R$ ${totalEntrega.toFixed(2)}
+
+            </small>
+
+            <br>
+
+            <small
+                style="
+                    color:#2fbe48;
+                    font-weight:600;
+                "
+            >
+
+                🎁 Desconto 30%:
+                -R$ ${desconto30.toFixed(2)}
+
+            </small>
+
+            <br>
+
+            <strong
+                style="
+                    font-size:20px;
+                    color:black;
+                "
+            >
+
+                Total:
+                R$ ${totalFinal.toFixed(2)}
+
+            </strong>
+        `;
     }
 }
 
 // ==========================================================================
-// 8. CUPONS E FINALIZAÇÃO DE PEDIDOS (COM SALDO DA CONTA)
+// 8. FINALIZAÇÃO DE PEDIDOS
 // ==========================================================================
-
-async function aplicarCupom() {
-    const campo = document.getElementById("inputCupom");
-    if (!campo) return;
-
-    const codigo = campo.value.trim();
-    if (!codigo) {
-        alert("Digite um cupom!");
-        return;
-    }
-
-    try {
-        const resposta = await fetch(`http://127.0.0.1:5001/api/cupom/${codigo}`, { cache: "no-store" });
-        const data = await resposta.json();
-
-        if (data.desconto > 0) {
-            salvarDesconto(data.desconto);
-            alert("Cupom aplicado com sucesso!");
-            atualizarCarrinho();
-        } else {
-            salvarDesconto(0);
-            alert("Cupom inválido!");
-            atualizarCarrinho();
-        }
-    } catch (erro) {
-        console.error("Erro ao validar cupom:", erro);
-        alert("Erro ao conectar com o servidor para validar cupom.");
-    }
-}
 
 async function finalizarPedido() {
-    const emailUsuario = localStorage.getItem("usuarioLogado");
-    const chave = getChaveCarrinho();
-    const carrinho = JSON.parse(localStorage.getItem(chave)) || [];
+
+    const emailUsuario =
+        localStorage.getItem("usuarioLogado");
+
+    const chave =
+        getChaveCarrinho();
+
+    const carrinho =
+        JSON.parse(localStorage.getItem(chave)) || [];
 
     if (carrinho.length === 0) {
+
         alert("Sua sacola está vazia!");
+
         return;
     }
 
     let metodoSelecionado = "Pix";
-    const radioMetodo = document.querySelector('input[name="metodo"]:checked');
+
+    const radioMetodo = document.querySelector(
+        'input[name="metodo"]:checked'
+    );
+
     if (radioMetodo) {
         metodoSelecionado = radioMetodo.value;
     }
 
-    const subtotal = carrinho.reduce((acc, i) => acc + i.preco, 0);
-    let totalFinal = subtotal - descontoAtivo;
+    // =========================
+    // SUBTOTAL
+    // =========================
+
+    const subtotal =
+        carrinho.reduce(
+            (acc, item) => acc + item.preco,
+            0
+        );
+
+    // =========================
+    // SOMA FRETES ÚNICOS
+    // =========================
+
+    const taxasPorRestaurante = {};
+
+    carrinho.forEach(item => {
+
+        if (
+            !taxasPorRestaurante[item.restaurante]
+        ) {
+            taxasPorRestaurante[item.restaurante] =
+                item.taxa || 0;
+        }
+    });
+
+    const totalEntrega =
+        Object.values(taxasPorRestaurante)
+            .reduce((acc, taxa) => acc + taxa, 0);
+
+    // =========================
+    // DESCONTO 30%
+    // =========================
+
+    const desconto30 =
+        (subtotal + totalEntrega) * 0.30;
+
+    // =========================
+    // TOTAL FINAL
+    // =========================
+
+    let totalFinal =
+        subtotal +
+        totalEntrega -
+        desconto30;
+
     if (totalFinal < 0) {
         totalFinal = 0;
     }
 
-    // TRAVA: Verifica o saldo do usuário antes de cobrar
-    if (metodoSelecionado === "Saldo da Conta") {
-        try {
-            const respostaPerfil = await fetch(`http://127.0.0.1:5001/api/usuario/${emailUsuario}`);
-            
-            if (!respostaPerfil.ok) {
-                alert("⚠️ Sessão encerrada. Esta conta foi revogada pelo administrador.");
-                logout();
-                return;
-            }
+    // =========================
+    // CONFIRMAÇÃO
+    // =========================
 
-            const dadosUsuario = await respostaPerfil.json();
-            
-            if (dadosUsuario.saldo < totalFinal) {
-                alert(`❌ Transação Recusada!\nSeu saldo atual é de R$ ${dadosUsuario.saldo.toFixed(2)}, mas a conta totalizou R$ ${totalFinal.toFixed(2)}.`);
-                return;
-            }
-        } catch (erro) {
-            console.error("Erro ao consultar saldo:", erro);
-            alert("Erro ao consultar fundos com o banco SQLite.");
-            return;
-        }
-    }
+    const itensTexto =
+        carrinho
+            .map(
+                item =>
+                    `• ${item.nome}
+(${item.restaurante})
+R$ ${item.preco.toFixed(2)}`
+            )
+            .join("\n\n");
 
-    const itensTexto = carrinho.map(i => `• ${i.nome} — R$ ${i.preco.toFixed(2)}`).join("\n");
-    const descontoTexto = descontoAtivo > 0 ? `\nDesconto: -R$ ${descontoAtivo.toFixed(2)}` : "";
-    
     const confirmado = confirm(
-        `📋 Confirmar Pedido e Pagamento?\n\n${itensTexto}${descontoTexto}\n\n💰 Total: R$ ${totalFinal.toFixed(2)}\n💳 Forma: ${metodoSelecionado}\n\nDeseja finalizar?`
+`📋 CONFIRMAR PEDIDO
+
+${itensTexto}
+
+🛒 Subtotal:
+R$ ${subtotal.toFixed(2)}
+
+🚚 Entrega:
+R$ ${totalEntrega.toFixed(2)}
+
+🎁 Desconto 30%:
+-R$ ${desconto30.toFixed(2)}
+
+💰 TOTAL:
+R$ ${totalFinal.toFixed(2)}
+
+💳 Pagamento:
+${metodoSelecionado}
+
+Deseja finalizar?`
     );
-    
-    if (!confirmado) {
-        return;
-    }
 
-    // PROCESSA O DÉBITO NO BANCO DE DADOS
+    if (!confirmado) return;
+
+    // =========================
+    // PAGAMENTO SALDO
+    // =========================
+
     if (metodoSelecionado === "Saldo da Conta") {
-        try {
-            const respostaDebito = await fetch("http://127.0.0.1:5001/api/usuario/pagar", {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailUsuario, valor: totalFinal })
-            });
 
-            const resultado = await respostaDebito.json();
-            
-            if (!respostaDebito.ok) {
-                alert("Erro de Cobrança: " + resultado.message);
+        try {
+
+            const respostaPerfil =
+                await fetch(
+                    `http://127.0.0.1:5001/api/usuario/${emailUsuario}`
+                );
+
+            const dadosUsuario =
+                await respostaPerfil.json();
+
+            if (
+                dadosUsuario.saldo < totalFinal
+            ) {
+
+                alert(
+`❌ Saldo insuficiente!
+
+Saldo:
+R$ ${dadosUsuario.saldo.toFixed(2)}
+
+Total:
+R$ ${totalFinal.toFixed(2)}`
+                );
+
                 return;
             }
-            
-            alert(`✨ Pagamento processado! R$ ${totalFinal.toFixed(2)} deduzidos da conta.`);
+
+            const respostaDebito =
+                await fetch(
+                    "http://127.0.0.1:5001/api/usuario/pagar",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            email: emailUsuario,
+                            valor: totalFinal
+                        })
+                    }
+                );
+
+            if (!respostaDebito.ok) {
+
+                alert(
+                    "Erro ao processar pagamento."
+                );
+
+                return;
+            }
+
         } catch (erro) {
-            console.error("Erro no debito:", erro);
-            alert("Erro crítico na comunicação bancária local.");
+
+            console.error(erro);
+
+            alert(
+                "Erro ao processar pagamento."
+            );
+
             return;
         }
     }
 
-    // REGISTRA O PEDIDO NO HISTÓRICO
-    const chavePedidos = getChavePedidos();
-    const pedidos = JSON.parse(localStorage.getItem(chavePedidos)) || [];
+    // =========================
+    // SALVAR PEDIDO
+    // =========================
+
+    const chavePedidos =
+        getChavePedidos();
+
+    const pedidos =
+        JSON.parse(
+            localStorage.getItem(chavePedidos)
+        ) || [];
 
     const novoPedido = {
-        id: Math.floor(Math.random() * 10000),
-        data: new Date().toLocaleString(),
+
+        id:
+            Math.floor(
+                Math.random() * 10000
+            ),
+
+        data:
+            new Date().toLocaleString(),
+
         itens: [...carrinho],
+
+        subtotal: subtotal,
+
+        entrega: totalEntrega,
+
+        descontoAplicado:
+            desconto30,
+
         total: totalFinal,
-        descontoAplicado: descontoAtivo,
-        pagamento: metodoSelecionado
+
+        pagamento:
+            metodoSelecionado,
+
+        avaliado: false
     };
 
     pedidos.push(novoPedido);
-    localStorage.setItem(chavePedidos, JSON.stringify(pedidos));
 
-    alert(`✅ Pedido Confirmado via ${metodoSelecionado}! O DanielzinhoFood já está preparando.`);
+    localStorage.setItem(
+        chavePedidos,
+        JSON.stringify(pedidos)
+    );
+
+    alert(
+        "✅ Pedido confirmado com sucesso!"
+    );
+
+    // =========================
+    // LIMPA CARRINHO
+    // =========================
 
     localStorage.removeItem(chave);
-    localStorage.removeItem(getChaveDesconto());
-    descontoAtivo = 0;
-    
-    window.location.href = "history.html";
-}
 
+    descontoAtivo = 0;
+
+    window.location.href =
+        "history.html";
+}
 // ==========================================================================
-// 9. HISTÓRICO DE COMPRAS CONCLUÍDAS (PÁGINA HISTORY)
+// 9. HISTÓRICO DE COMPRAS CONCLUÍDAS E AVALIAÇÃO MÚLTIPLA
 // ==========================================================================
 
 function carregarHistorico() {
@@ -578,6 +897,10 @@ function carregarHistorico() {
         card.classList.add("card");
 
         let itensTexto = p.itens.map(i => `${i.nome} <span style="font-size:11px; color:gray">(${i.restaurante})</span>`).join("<br>");
+        
+        let botaoAvaliacao = p.avaliado 
+            ? `<span style="color: #f39c12; font-size: 13px; font-weight: bold;">⭐ Pedido Avaliado</span>` 
+            : `<button onclick="avaliarPedido(${p.id})" style="background:#f39c12; padding:6px 12px; font-size:12px; border-radius:6px; border:none; cursor:pointer; color:white; font-weight:bold;">⭐ Avaliar Lojas</button>`;
 
         card.innerHTML = `
             <div style="width: 100%;">
@@ -589,14 +912,67 @@ function carregarHistorico() {
                     ${itensTexto}
                 </div>
                 <div style="border-top:1px dashed #eee; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
-                    <strong>Total: R$ ${p.total.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:gray;">(${p.pagamento || 'Pix'})</span></strong>
-                    ${p.descontoAplicado > 0 ? `<small style="color: #2fbe48; font-weight:600;">Desconto: R$ ${p.descontoAplicado.toFixed(2)}</small>` : ''}
+                    <div>
+                        <strong style="display:block;">Total: R$ ${p.total.toFixed(2)} <span style="font-size:12px; font-weight:normal; color:gray;">(${p.pagamento || 'Pix'})</span></strong>
+                        ${p.descontoAplicado > 0 ? `<small style="color: #2fbe48; font-weight:600;">Desconto: R$ ${p.descontoAplicado.toFixed(2)}</small>` : ''}
+                    </div>
+                    <div>
+                        ${botaoAvaliacao}
+                    </div>
                 </div>
             </div>
         `;
         
         div.appendChild(card);
     });
+}
+
+async function avaliarPedido(pedidoId) {
+    const chavePed = getChavePedidos();
+    const pedidos = JSON.parse(localStorage.getItem(chavePed)) || [];
+    const index = pedidos.findIndex(p => p.id === pedidoId);
+    
+    if (index === -1) return;
+    const pedido = pedidos[index];
+    
+    const restaurantesEnvolvidos = [...new Set(pedido.itens.map(i => i.restaurante))];
+    
+    for (const loja of restaurantesEnvolvidos) {
+        let notaStr = prompt(`De 1 a 5, que nota você dá para o cardápio e entrega do(a) ${loja}?`);
+        
+        if (!notaStr) continue; 
+        
+        let nota = parseFloat(notaStr.replace(',', '.'));
+        
+        if (isNaN(nota) || nota < 1 || nota > 5) {
+            alert(`⚠️ Nota inválida para ${loja}. Pulo ativado.`);
+            continue;
+        }
+
+        try {
+            const resposta = await fetch("http://127.0.0.1:5001/api/restaurante/avaliar", {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ restaurante: loja, nota: nota })
+            });
+            
+            const dados = await resposta.json();
+            
+            if (resposta.ok && dados.success) {
+                mostrarToast(`✨ Avaliação registrada! A nova nota do(a) ${loja} é ⭐ ${dados.nova_nota}`);
+            } else {
+                alert(`Erro ao avaliar ${loja}: ` + dados.message);
+            }
+        } catch (erro) {
+            console.error("Erro na avaliação:", erro);
+            alert(`Falha de conexão ao enviar a avaliação para ${loja}.`);
+        }
+    }
+    
+    pedido.avaliado = true;
+    localStorage.setItem(chavePed, JSON.stringify(pedidos));
+    
+    carregarHistorico();
 }
 
 // ==========================================================================
@@ -618,7 +994,6 @@ async function carregarPerfilCompleto() {
 
         const user = await resposta.json();
 
-        // Atualiza a visualização
         const viewNome = document.getElementById("viewNome");
         if (viewNome) viewNome.innerText = user.nome;
         
@@ -634,15 +1009,16 @@ async function carregarPerfilCompleto() {
         const viewSaldo = document.getElementById("viewSaldo");
         if (viewSaldo) viewSaldo.innerText = `R$ ${user.saldo.toFixed(2)}`;
         
+        // Torna a foto do perfil clicável para ampliar
         const viewFoto = document.getElementById("viewFoto");
-        if (viewFoto) viewFoto.src = user.foto_url;
+        if (viewFoto) {
+            viewFoto.src = user.foto_url;
+            viewFoto.classList.add("img-zoom");
+            viewFoto.onclick = () => abrirImagemFullscreen(user.foto_url);
+        }
 
-        // Preenche os inputs para edição
         const inputNome = document.getElementById("inputNome");
         if (inputNome) inputNome.value = user.nome;
-        
-        const inputFoto = document.getElementById("inputFoto");
-        if (inputFoto) inputFoto.value = user.foto_url;
         
         const inputTelefone = document.getElementById("inputTelefone");
         if (inputTelefone) inputTelefone.value = user.telefone;
@@ -659,14 +1035,23 @@ async function salvarPerfil() {
     const email = localStorage.getItem("usuarioLogado");
     
     const inputNome = document.getElementById("inputNome").value.trim();
-    const inputFoto = document.getElementById("inputFoto").value.trim();
     const inputTelefone = document.getElementById("inputTelefone").value.trim();
     const inputEndereco = document.getElementById("inputEndereco").value.trim();
+
+    let urlFotoFinal = document.getElementById("viewFoto").src;
+    
+    const campoArquivo = document.getElementById("inputFotoArquivo");
+    if (campoArquivo && campoArquivo.files.length > 0) {
+        const linkUpload = await uploadArquivo(campoArquivo);
+        if (linkUpload) {
+            urlFotoFinal = linkUpload;
+        }
+    }
 
     const dadosAtualizados = {
         email: email,
         nome: inputNome,
-        foto_url: inputFoto,
+        foto_url: urlFotoFinal,
         telefone: inputTelefone,
         endereco: inputEndereco
     };
@@ -681,117 +1066,334 @@ async function salvarPerfil() {
         if (resposta.ok) {
             alert("✨ Perfil gravado com sucesso no banco de dados!");
             carregarPerfilCompleto(); 
+            if(campoArquivo) campoArquivo.value = ""; 
         }
     } catch (erro) {
-        console.error("Erro ao atualizar o perfil no banco:", erro);
+        console.error("Erro ao atualizar o perfil:", erro);
         alert("Erro ao salvar perfil no servidor.");
     }
 }
 
 // ==========================================================================
-// 11. ÁREA EXCLUSIVA DE GESTÃO DE USUÁRIOS (PAINEL ADMIN.HTML)
+// 11. ÁREA EXCLUSIVA DE GESTÃO DE USUÁRIOS E ADMIN
 // ==========================================================================
 
 async function adminCarregarUsuarios() {
-    const container = document.getElementById("tabelaUsuarios");
+
+    const container =
+        document.getElementById("tabelaUsuarios");
+
     if (!container) return;
 
-    container.innerHTML = "<tr><td colspan='5' style='text-align:center;'>Buscando usuários da base SQLite...</td></tr>";
+    container.innerHTML = `
+        <tr>
+            <td colspan="5"
+                style="
+                    text-align:center;
+                    padding:20px;
+                "
+            >
+                Carregando usuários...
+            </td>
+        </tr>
+    `;
 
     try {
-        const resposta = await fetch("http://127.0.0.1:5001/api/admin/usuarios", { cache: "no-store" });
-        const listaUsuarios = await resposta.json();
+
+        const resposta = await fetch(
+            "http://127.0.0.1:5001/api/admin/usuarios",
+            { cache: "no-store" }
+        );
+
+        const listaUsuarios =
+            await resposta.json();
 
         container.innerHTML = "";
 
         if (listaUsuarios.length === 0) {
-            container.innerHTML = "<tr><td colspan='5' style='text-align:center; color:gray;'>Nenhum usuário cadastrado até o momento.</td></tr>";
+
+            container.innerHTML = `
+                <tr>
+                    <td colspan="5"
+                        style="
+                            text-align:center;
+                            color:gray;
+                            padding:20px;
+                        "
+                    >
+                        Nenhum usuário cadastrado.
+                    </td>
+                </tr>
+            `;
+
             return;
         }
 
         listaUsuarios.forEach(u => {
-            // TRAVA DE SEGURANÇA: Impede que o próprio admin mestre seja listado
+
             if (u.email === "admin") return;
 
             const tr = document.createElement("tr");
-            
+
+            tr.style.borderBottom =
+                "1px solid #eee";
+
+            tr.style.verticalAlign = "middle";
+
             tr.innerHTML = `
-                <td>
-                    <img src="${u.foto_url}" style="width:35px; height:35px; border-radius:50%; object-fit:cover;">
+
+                <!-- FOTO -->
+                <td
+                    style="
+                        width:90px;
+                        text-align:center;
+                        padding:12px;
+                    "
+                >
+
+                    <img
+                        src="${u.foto_url}"
+
+                        class="img-zoom"
+
+                        onclick="
+                            abrirImagemFullscreen(
+                                this.src
+                            )
+                        "
+
+                        style="
+                            width:55px;
+                            height:55px;
+                            border-radius:50%;
+                            object-fit:cover;
+                            border:2px solid #ddd;
+                            cursor:pointer;
+                        "
+                    >
+
                 </td>
-                <td>
-                    <strong>${u.nome}</strong><br>
-                    <small style="color:#aaa;">${u.email}</small>
-                </td>
-                <td>
-                    <small>${u.telefone || 'Não informado'}<br>${u.endereco || 'Sem endereço'}</small>
-                </td>
-                <td>
-                    <span style="color:#2fbe48; font-weight:bold;">R$ ${u.saldo.toFixed(2)}</span>
-                    <div style="display:flex; gap:5px; margin-top:5px;">
-                        <input type="number" id="saldo_${u.id}" placeholder="R$" style="width:70px; padding:4px; font-size:12px; margin:0; display:inline-block;">
-                        <button onclick="adminAlterarSaldo(${u.id})" style="padding:4px 8px; font-size:12px;">Definir</button>
+
+                <!-- NOME / EMAIL -->
+                <td
+                    style="
+                        min-width:230px;
+                        padding:12px;
+                    "
+                >
+
+                    <div
+                        style="
+                            font-size:15px;
+                            font-weight:bold;
+                            margin-bottom:4px;
+                        "
+                    >
+                        ${u.nome}
                     </div>
+
+                    <div
+                        style="
+                            font-size:12px;
+                            color:#888;
+                            word-break:break-word;
+                        "
+                    >
+                        ${u.email}
+                    </div>
+
                 </td>
-                <td>
-                    <button onclick="adminDeletarUsuario(${u.id})" style="background:#c0392b; padding:6px 12px; font-size:12px;">Excluir</button>
+
+                <!-- TELEFONE / ENDEREÇO -->
+                <td
+                    style="
+                        min-width:250px;
+                        padding:12px;
+                        font-size:13px;
+                        line-height:1.6;
+                    "
+                >
+
+                    <div>
+                        📞
+                        ${u.telefone || "Não informado"}
+                    </div>
+
+                    <div>
+                        📍
+                        ${u.endereco || "Sem endereço"}
+                    </div>
+
+                </td>
+
+                <!-- SALDO -->
+                <td
+                    style="
+                        min-width:220px;
+                        padding:12px;
+                    "
+                >
+
+                    <div
+                        style="
+                            color:#27ae60;
+                            font-size:16px;
+                            font-weight:bold;
+                            margin-bottom:10px;
+                        "
+                    >
+
+                        R$ ${u.saldo.toFixed(2)}
+
+                    </div>
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:8px;
+                            align-items:center;
+                            flex-wrap:wrap;
+                        "
+                    >
+
+                        <input
+                            type="number"
+
+                            id="saldo_${u.id}"
+
+                            placeholder="Novo saldo"
+
+                            style="
+                                width:110px;
+                                padding:8px;
+                                border:1px solid #ccc;
+                                border-radius:8px;
+                                font-size:12px;
+                                outline:none;
+                            "
+                        >
+
+                        <button
+                            onclick="
+                                adminAlterarSaldo(
+                                    ${u.id}
+                                )
+                            "
+
+                            style="
+                                padding:8px 12px;
+                                border:none;
+                                border-radius:8px;
+                                background:#3498db;
+                                color:white;
+                                cursor:pointer;
+                                font-size:12px;
+                                font-weight:bold;
+                            "
+                        >
+
+                            Salvar
+
+                        </button>
+
+                    </div>
+
+                </td>
+
+                <!-- AÇÕES -->
+                <td
+                    style="
+                        width:140px;
+                        text-align:center;
+                        padding:12px;
+                    "
+                >
+
+                    <button
+                        onclick="
+                            adminDeletarUsuario(
+                                ${u.id}
+                            )
+                        "
+
+                        style="
+                            background:#e74c3c;
+                            color:white;
+                            border:none;
+                            border-radius:8px;
+                            padding:10px 14px;
+                            cursor:pointer;
+                            font-size:12px;
+                            font-weight:bold;
+                            transition:0.2s;
+                        "
+
+                        onmouseover="
+                            this.style.opacity='0.8'
+                        "
+
+                        onmouseout="
+                            this.style.opacity='1'
+                        "
+                    >
+
+                        Excluir
+
+                    </button>
+
                 </td>
             `;
-            
+
             container.appendChild(tr);
         });
+
     } catch (erro) {
-        console.error("Erro no fetch admin de usuários:", erro);
-        container.innerHTML = "<tr><td colspan='5' style='text-align:center; color:#e74c3c;'>Erro ao carregar base SQLite.</td></tr>";
+
+        console.error(
+            "Erro ao carregar usuários:",
+            erro
+        );
+
+        container.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    style="
+                        text-align:center;
+                        color:red;
+                        padding:20px;
+                    "
+                >
+                    ❌ Erro ao carregar usuários.
+                </td>
+            </tr>
+        `;
     }
 }
+// ==========================================================================
+// 12. SISTEMA DE UPLOAD DE ARQUIVOS
+// ==========================================================================
 
-async function adminDeletarUsuario(id) {
-    const confirmar = confirm("⚠️ Tem certeza que deseja remover este cliente permanentemente da base de dados?");
+async function uploadArquivo(fileInput) {
+    if (!fileInput || fileInput.files.length === 0) return null;
     
-    if (!confirmar) {
-        return;
-    }
-
+    const formData = new FormData();
+    formData.append("arquivo", fileInput.files[0]);
+    
     try {
-        const resposta = await fetch(`http://127.0.0.1:5001/api/admin/usuario/deletar/${id}`, { method: 'DELETE' });
-        
-        if (resposta.ok) {
-            alert("Cliente removido com sucesso!");
-            adminCarregarUsuarios();
-        }
-    } catch (erro) {
-        alert("Erro ao realizar operação de exclusão no banco de dados.");
-    }
-}
-
-async function adminAlterarSaldo(id) {
-    const input = document.getElementById(`saldo_${id}`);
-    const valor = input ? input.value : "";
-
-    if (!valor || parseFloat(valor) < 0) {
-        alert("Insira um valor de saldo válido!");
-        return;
-    }
-
-    try {
-        const resposta = await fetch("http://127.0.0.1:5001/api/admin/usuario/saldo", {
+        const resposta = await fetch("http://127.0.0.1:5001/api/upload", {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: id, saldo: valor })
+            body: formData 
         });
-
-        if (resposta.ok) {
-            alert("Saldo atualizado na conta do cliente!");
-            adminCarregarUsuarios();
-        }
+        const dados = await resposta.json();
+        return dados.success ? dados.url : null;
     } catch (erro) {
-        alert("Erro ao salvar novo saldo no banco de dados.");
+        console.error("Erro no upload da imagem:", erro);
+        return null;
     }
 }
 
 // ==========================================================================
-// 12. INICIALIZAÇÃO DA PÁGINA
+// 13. INICIALIZAÇÃO DA PÁGINA
 // ==========================================================================
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -804,4 +1406,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function voltarHome() {
     window.location.href = "home.html";
+}
+
+// ==========================================================================
+// 14. SISTEMA DE VISUALIZAÇÃO DE IMAGEM AMPLIADA (LIGHTBOX)
+// ==========================================================================
+
+function abrirImagemFullscreen(url) {
+    let modal = document.getElementById("modalVisualizadorImagem");
+    if (!modal) {
+        modal = document.createElement("div");
+        modal.id = "modalVisualizadorImagem";
+        modal.className = "modal-fullscreen";
+        modal.innerHTML = `
+            <span class="fechar-fullscreen" onclick="fecharImagemFullscreen()">&times;</span>
+            <img id="imgVisualizador" src="">
+        `;
+        // Clicar no fundo escuro fecha a imagem
+        modal.addEventListener('click', function(e) {
+            if(e.target === modal) fecharImagemFullscreen();
+        });
+        document.body.appendChild(modal);
+    }
+    
+    document.getElementById("imgVisualizador").src = url;
+    
+    // Mostra o modal com uma leve animação fade-in
+    modal.style.display = "flex";
+    setTimeout(() => modal.classList.add("mostrar"), 10);
+}
+
+function fecharImagemFullscreen() {
+    const modal = document.getElementById("modalVisualizadorImagem");
+    if (modal) {
+        modal.classList.remove("mostrar");
+        setTimeout(() => modal.style.display = "none", 300);
+    }
 }
