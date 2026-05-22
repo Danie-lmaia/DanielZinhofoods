@@ -97,7 +97,9 @@ O projeto utiliza princípios modernos de UX/UI:
 ✅ Feedback visual com Toasts
 ✅ Navegação fluida
 ✅ Organização visual moderna
+
 📂 Estrutura do Projeto
+
 DanielzinhoFood/
 │
 ├── uploads/          # Imagens de lojas e pratos
@@ -107,6 +109,7 @@ DanielzinhoFood/
 ├── admin.html        # Painel administrativo
 ├── index.html        # Página principal
 └── README.md
+
 ⚙️ Instalação e Configuração
 📋 Pré-requisitos
 
